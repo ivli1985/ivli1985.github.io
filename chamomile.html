@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>👥 Социальный календарь | Друзья и профиль</title>
+    <title>🔐 Социальный календарь | Безопасная версия</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,6 @@
             padding: 20px;
         }
 
-        /* главный контейнер с двумя колонками (календарь + панель друзей) */
         .dashboard {
             max-width: 1600px;
             margin: 0 auto;
@@ -27,13 +26,11 @@
             flex-wrap: wrap;
         }
 
-        /* левая панель друзей и профиля */
         .sidebar {
             width: 280px;
             background: rgba(255,255,255,0.96);
             border-radius: 2rem;
             box-shadow: 0 12px 28px rgba(0,0,0,0.1);
-            overflow: hidden;
             backdrop-filter: blur(2px);
             display: flex;
             flex-direction: column;
@@ -63,9 +60,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        .avatar:hover {
-            transform: scale(1.02);
-        }
+        .avatar:hover { transform: scale(1.02); }
 
         .profile-name {
             font-size: 1.3rem;
@@ -82,11 +77,12 @@
             border-radius: 40px;
             font-size: 0.75rem;
             cursor: pointer;
-            margin-top: 8px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            transition: 0.1s;
         }
+        .edit-profile-btn:hover { background: rgba(255,255,255,0.3); }
 
         .friends-header {
             display: flex;
@@ -161,21 +157,10 @@
             padding: 8px 12px;
             border-radius: 40px;
             cursor: pointer;
+            transition: 0.1s;
         }
+        .btn-icon:hover { background: #1f4273; }
 
-        .btn-icon:hover {
-            background: #1f4273;
-        }
-
-        .pending-badge {
-            background: #fef3c7;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 20px;
-            color: #b45309;
-        }
-
-        /* основной блок календаря */
         .calendar-wrapper {
             flex: 1;
             min-width: 300px;
@@ -242,10 +227,7 @@
             cursor: pointer;
             transition: background 0.1s;
         }
-
-        .day-cell:hover {
-            background: #f6f9ff;
-        }
+        .day-cell:hover { background: #f6f9ff; }
 
         .day-number {
             font-weight: 600;
@@ -263,7 +245,6 @@
             background: #eef2ff;
             color: #0b2b4f;
         }
-
         .other-month .day-number {
             background: #f0f2f5;
             color: #8b9ab0;
@@ -285,18 +266,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .event-mine { background: #e6edfc; border-left: 2px solid #3b5e9c; }
+        .event-friend { background: #e0f7ea; border-left: 2px solid #2e7d64; }
 
-        .event-mine {
-            background: #e6edfc;
-            border-left: 2px solid #3b5e9c;
-        }
-
-        .event-friend {
-            background: #e0f7ea;
-            border-left: 2px solid #2e7d64;
-        }
-
-        /* модалки */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -313,7 +285,6 @@
             opacity: 0;
             transition: 0.2s;
         }
-
         .modal-overlay.active {
             visibility: visible;
             opacity: 1;
@@ -326,7 +297,9 @@
             border-radius: 32px;
             padding: 1.5rem;
             transform: scale(0.96);
+            transition: 0.2s;
         }
+        .active .modal-container { transform: scale(1); }
 
         .modal-header {
             display: flex;
@@ -335,7 +308,6 @@
             font-weight: 700;
             font-size: 1.3rem;
         }
-
         .close-modal-x {
             font-size: 28px;
             cursor: pointer;
@@ -350,49 +322,48 @@
             margin-bottom: 6px;
         }
 
+        .refresh-friends-btn {
+            margin: 8px 12px;
+            background: #3b7c5e;
+        }
+
         @media (max-width: 800px) {
-            .dashboard {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                order: 2;
-            }
-            .calendar-wrapper {
-                order: 1;
-            }
+            .dashboard { flex-direction: column; }
+            .sidebar { width: 100%; order: 2; }
+            .calendar-wrapper { order: 1; }
         }
     </style>
 </head>
 <body>
 <div class="dashboard">
-    <!-- Боковая панель: профиль + друзья -->
-    <div class="sidebar" id="sidebar">
-        <div class="profile-card" id="profileCard">
+    <div class="sidebar">
+        <div class="profile-card">
             <div class="avatar" id="avatarBtn">😊</div>
-            <div class="profile-name" id="profileName">Гость</div>
+            <div class="profile-name" id="profileName">Не авторизован</div>
             <button class="edit-profile-btn" id="editProfileBtn">✏️ Редактировать профиль</button>
+            <button class="edit-profile-btn" id="loginBtn" style="margin-top:8px;">🔑 Войти / Регистрация</button>
+            <button class="edit-profile-btn" id="logoutBtn" style="background:#b91c2c; margin-top:8px;">🚪 Выйти</button>
         </div>
         <div class="friends-header">
             <span>👥 Друзья</span>
             <span id="friendCountBadge">0</span>
         </div>
         <div class="friends-list" id="friendsListContainer">
-            <div style="padding: 20px; text-align: center; color: #8ba0bc;">Войдите, чтобы видеть друзей</div>
+            <div style="padding:20px;text-align:center;">Авторизуйтесь, чтобы видеть друзей</div>
         </div>
-        <div class="add-friend-form" id="addFriendForm">
+        <div class="add-friend-form">
             <input type="text" id="newFriendInput" placeholder="Никнейм друга">
             <button class="btn-icon" id="sendFriendReqBtn">➕</button>
         </div>
+        <button id="refreshFriendsBtn" class="btn-icon refresh-friends-btn">🔄 Обновить данные друзей</button>
     </div>
 
-    <!-- Календарь -->
     <div class="calendar-wrapper">
         <div class="calendar-nav">
             <div class="month-year" id="monthYearDisplay">Май 2025</div>
             <div class="nav-buttons">
                 <button class="nav-btn" id="prevMonthBtn">◀</button>
-                <button class="nav-btn today" id="todayBtn">Сегодня</button>
+                <button class="nav-btn" id="todayBtn">Сегодня</button>
                 <button class="nav-btn" id="nextMonthBtn">▶</button>
             </div>
         </div>
@@ -406,29 +377,29 @@
     <div class="modal-container">
         <div class="modal-header">
             <span id="modalDateTitle"></span>
-            <span class="close-modal-x" id="closeEventModalBtn">&times;</span>
+            <span class="close-modal-x" data-modal="eventModal">&times;</span>
         </div>
         <div id="modalEventsList" style="max-height: 250px; overflow-y: auto; margin: 15px 0;"></div>
-        <div id="addEventSection" style="display: flex; gap: 8px; margin-bottom: 15px;">
-            <input type="text" id="newEventInput" placeholder="Новое событие" style="flex:1; padding: 8px; border-radius: 30px; border:1px solid #ccc;">
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="newEventInput" placeholder="Новое событие" maxlength="100" style="flex:1; padding: 8px; border-radius: 30px; border:1px solid #ccc;">
             <button class="btn-icon" id="addEventBtn">Добавить</button>
         </div>
         <button class="btn-icon" id="clearDayEventsBtn" style="background:#b91c2c;">Очистить день</button>
     </div>
 </div>
 
-<!-- Модалка профиля (смена ника и аватара) -->
+<!-- Модалка профиля -->
 <div id="profileModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
             <span>Редактировать профиль</span>
-            <span class="close-modal-x" id="closeProfileModalBtn">&times;</span>
+            <span class="close-modal-x" data-modal="profileModal">&times;</span>
         </div>
         <div style="text-align: center; margin-bottom: 16px;">
-            <div class="avatar" id="editAvatarPreview" style="width: 80px; height: 80px; font-size: 2.5rem; margin: auto; background: #e2e8f0;">😊</div>
-            <input type="text" id="avatarEmojiInput" placeholder="Введи эмодзи или текст (1-2 символа)" maxlength="2" style="margin: 10px 0; padding: 6px; width: 100%; border-radius: 30px;">
+            <div class="avatar" id="editAvatarPreview" style="width:80px; height:80px; font-size:2.5rem; margin:auto; background:#e2e8f0;">😊</div>
+            <input type="text" id="avatarEmojiInput" placeholder="Введи эмодзи (1-2 символа)" maxlength="2" style="margin:10px 0; padding:6px; width:100%; border-radius:30px;">
         </div>
-        <input type="text" id="newNicknameInput" placeholder="Новый никнейм" style="width:100%; padding: 10px; border-radius: 30px; margin-bottom: 16px;">
+        <input type="text" id="newNicknameInput" placeholder="Новый никнейм" maxlength="30" style="width:100%; padding:10px; border-radius:30px; margin-bottom:16px;">
         <button class="btn-icon" id="saveProfileBtn" style="width:100%;">Сохранить изменения</button>
     </div>
 </div>
@@ -438,174 +409,186 @@
     <div class="modal-container">
         <div class="modal-header">
             <span>📨 Заявки в друзья</span>
-            <span class="close-modal-x" id="closeRequestsModalBtn">&times;</span>
+            <span class="close-modal-x" data-modal="requestsModal">&times;</span>
         </div>
         <div id="requestsList" style="max-height: 300px; overflow-y: auto;"></div>
     </div>
 </div>
 
-<script>
-    // ---------- ХРАНИЛИЩЕ ПОЛЬЗОВАТЕЛЕЙ (с аватарами) ----------
-    const STORAGE_KEY = "social_calendar_v3";
-    let currentUser = null;            // { username, avatar, displayName }
-    let eventsDB = {};                 // события текущего юзера
-    let selectedFriends = new Set();    // выбранные друзья (никнеймы для просмотра)
-    let friendEventsCache = {};         // кеш событий друзей { friendName: { dateKey: [...] } }
+<!-- Модалка входа/регистрации -->
+<div id="authModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span>🔐 Вход / Регистрация</span>
+            <span class="close-modal-x" data-modal="authModal">&times;</span>
+        </div>
+        <input type="text" id="authUsername" placeholder="Логин" style="width:100%; padding:10px; border-radius:30px; margin-bottom:12px;">
+        <input type="password" id="authPassword" placeholder="Пароль" style="width:100%; padding:10px; border-radius:30px; margin-bottom:12px;">
+        <button id="loginBtnModal" class="btn-icon" style="width:100%; margin-bottom:8px;">Войти</button>
+        <button id="registerBtnModal" class="btn-icon" style="width:100%; background:#2e7d64;">Зарегистрироваться</button>
+    </div>
+</div>
 
-    // ---------- ФУНКЦИИ РАБОТЫ С ДАННЫМИ ----------
-    function getAllUsers() {
+<script>
+    // ---------- Безопасное экранирование ----------
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // ---------- Хеширование пароля (SHA-256) ----------
+    async function hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ---------- Хранилище ----------
+    const STORAGE_KEY = "social_calendar_secure_v2";
+
+    async function getAllUsers() {
         const raw = localStorage.getItem(STORAGE_KEY);
         try {
             return raw ? JSON.parse(raw) : {};
         } catch { return {}; }
     }
 
-    function saveAllUsers(users) {
+    async function saveAllUsers(users) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
     }
 
-    function saveCurrentUser() {
+    // Сессия хранит только username
+    function getSessionUser() {
+        return localStorage.getItem("current_session_user");
+    }
+    function setSessionUser(username) {
+        if (username) localStorage.setItem("current_session_user", username);
+        else localStorage.removeItem("current_session_user");
+    }
+
+    // Глобальное состояние приложения
+    let currentUser = null;          // { username, avatar, displayName }
+    let eventsDB = {};               // события текущего пользователя
+    let selectedFriends = new Set(); // выбранные никнеймы друзей
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    // ---------- Загрузка данных пользователя ----------
+    async function loadCurrentUser() {
+        const sess = getSessionUser();
+        if (!sess) return null;
+        const users = await getAllUsers();
+        const data = users[sess];
+        if (!data) {
+            setSessionUser(null);
+            return null;
+        }
+        return {
+            username: sess,
+            avatar: data.avatar || "😊",
+            displayName: data.displayName || sess,
+            events: data.events || {}
+        };
+    }
+
+    async function saveCurrentUserData() {
         if (!currentUser) return;
-        const users = getAllUsers();
-        let userData = users[currentUser.username];
+        const users = await getAllUsers();
+        const userData = users[currentUser.username];
         if (userData) {
             userData.avatar = currentUser.avatar;
             userData.displayName = currentUser.displayName;
             userData.events = eventsDB;
             users[currentUser.username] = userData;
-            saveAllUsers(users);
+            await saveAllUsers(users);
         }
     }
 
-    function loadUserData(username) {
-        const users = getAllUsers();
-        return users[username] || null;
+    // Регистрация / вход
+    async function registerUser(username, password) {
+        username = username.trim();
+        if (!username || !password) return { success: false, message: "Заполните все поля" };
+        const users = await getAllUsers();
+        if (users[username]) return { success: false, message: "Пользователь уже существует" };
+        const hashed = await hashPassword(password);
+        users[username] = {
+            password: hashed,
+            events: {},
+            friends: [],
+            incomingRequests: [],
+            sentRequests: [],
+            avatar: "😊",
+            displayName: username
+        };
+        await saveAllUsers(users);
+        return await loginUser(username, password);
     }
 
-    // инициализация / восстановление сессии
-    function restoreSession() {
-        const saved = localStorage.getItem("current_session_user");
-        if (saved) {
-            try {
-                const { username, avatar, displayName } = JSON.parse(saved);
-                const userExists = getAllUsers()[username];
-                if (userExists) {
-                    currentUser = { username, avatar: avatar || "😊", displayName: displayName || username };
-                    const full = getAllUsers()[username];
-                    eventsDB = full.events || {};
-                    currentUser.avatar = full.avatar || "😊";
-                    currentUser.displayName = full.displayName || username;
-                    return true;
-                }
-            } catch(e) {}
-        }
-        return false;
+    async function loginUser(username, password) {
+        username = username.trim();
+        const users = await getAllUsers();
+        const user = users[username];
+        if (!user) return { success: false, message: "Пользователь не найден" };
+        const hashedInput = await hashPassword(password);
+        if (user.password !== hashedInput) return { success: false, message: "Неверный пароль" };
+        setSessionUser(username);
+        currentUser = {
+            username: username,
+            avatar: user.avatar || "😊",
+            displayName: user.displayName || username
+        };
+        eventsDB = user.events || {};
+        selectedFriends.clear();
+        await refreshUIfull();
+        renderCalendar();
+        updateMonthYearDisplay();
+        return { success: true, message: "Добро пожаловать!" };
     }
 
-    function persistSession() {
-        if (currentUser) {
-            localStorage.setItem("current_session_user", JSON.stringify({
-                username: currentUser.username,
-                avatar: currentUser.avatar,
-                displayName: currentUser.displayName
-            }));
-        } else {
-            localStorage.removeItem("current_session_user");
-        }
+    async function logout() {
+        if (currentUser) await saveCurrentUserData();
+        currentUser = null;
+        eventsDB = {};
+        selectedFriends.clear();
+        setSessionUser(null);
+        await refreshUIfull();
+        renderCalendar();
+        updateMonthYearDisplay();
     }
 
-    // обновить интерфейс друзей и панели
-    function refreshUI() {
-        if (!currentUser) {
-            document.getElementById('profileName').innerText = "Гость";
-            document.getElementById('avatarBtn').innerText = "😊";
-            document.getElementById('friendsListContainer').innerHTML = '<div style="padding:20px;text-align:center;">Войдите, чтобы видеть друзей</div>';
-            document.getElementById('friendCountBadge').innerText = "";
-            return;
-        }
-        document.getElementById('profileName').innerText = currentUser.displayName || currentUser.username;
-        document.getElementById('avatarBtn').innerText = currentUser.avatar || "😊";
-        
-        const users = getAllUsers();
-        const myData = users[currentUser.username] || { friends: [], incomingRequests: [] };
-        const friends = myData.friends || [];
-        const incoming = myData.incomingRequests || [];
-        document.getElementById('friendCountBadge').innerText = friends.length;
-        
-        let friendsHtml = '';
-        friends.forEach(friend => {
-            const friendData = users[friend] || {};
-            const friendAvatar = friendData.avatar || "👤";
-            const friendName = friendData.displayName || friend;
-            const isSelected = selectedFriends.has(friend);
-            friendsHtml += `
-                <div class="friend-item ${isSelected ? 'selected' : ''}" data-friend="${friend}">
-                    <div class="friend-avatar">${friendAvatar}</div>
-                    <div class="friend-name">${friendName}</div>
-                    <div style="font-size:0.7rem; ${isSelected ? 'color:#2f5b9e;' : ''}">${isSelected ? '✓' : ''}</div>
-                </div>
-            `;
-        });
-        if (incoming.length > 0) {
-            friendsHtml += `<div style="margin-top:10px;"><button id="showRequestsBtn" class="btn-icon" style="background:#d97706;">📩 Заявки (${incoming.length})</button></div>`;
-        }
-        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
-        
-        document.querySelectorAll('.friend-item').forEach(el => {
-            const friendName = el.dataset.friend;
-            el.addEventListener('click', () => {
-                if (selectedFriends.has(friendName)) selectedFriends.delete(friendName);
-                else selectedFriends.add(friendName);
-                // подгружаем события друга в кеш, если нет
-                if (!friendEventsCache[friendName]) {
-                    const friendData = getAllUsers()[friendName];
-                    friendEventsCache[friendName] = friendData?.events || {};
-                }
-                refreshUI();
-                renderCalendar();
-            });
-        });
-        if (incoming.length > 0) {
-            const btn = document.getElementById('showRequestsBtn');
-            if (btn) btn.onclick = () => openRequestsModal();
-        }
-    }
-
-    // загрузка событий для выбранных друзей (кеш уже есть)
-    function getCombinedEvents(dateKey) {
-        let mine = eventsDB[dateKey] || [];
-        let friendsEvents = [];
-        for (let friend of selectedFriends) {
-            const friendEv = (friendEventsCache[friend] && friendEventsCache[friend][dateKey]) || [];
-            friendsEvents.push(...friendEv.map(e => ({ text: e, friendName: friend })));
-        }
-        return { mine, friends: friendsEvents };
-    }
-
-    // ---------- УПРАВЛЕНИЕ ДРУЗЬЯМИ ----------
-    function sendFriendRequest(to) {
-        if (!currentUser) { alert("Войдите"); return false; }
-        if (to === currentUser.username) { alert("Себя нельзя"); return false; }
-        const users = getAllUsers();
+    // ---------- Друзья и заявки ----------
+    async function sendFriendRequest(to) {
+        if (!currentUser) { alert("Войдите в аккаунт"); return false; }
+        if (to === currentUser.username) { alert("Нельзя добавить себя"); return false; }
+        const users = await getAllUsers();
         if (!users[to]) { alert("Пользователь не найден"); return false; }
         let my = users[currentUser.username];
+        let target = users[to];
         if (my.friends?.includes(to)) { alert("Уже друг"); return false; }
         if (my.sentRequests?.includes(to)) { alert("Заявка уже отправлена"); return false; }
         my.sentRequests = my.sentRequests || [];
         my.sentRequests.push(to);
-        let target = users[to];
         target.incomingRequests = target.incomingRequests || [];
         target.incomingRequests.push(currentUser.username);
         users[currentUser.username] = my;
         users[to] = target;
-        saveAllUsers(users);
-        alert(`Заявка отправлена ${to}`);
-        refreshUI();
+        await saveAllUsers(users);
+        alert(`Заявка отправлена пользователю ${to}`);
+        await refreshUIfull();
         return true;
     }
 
-    function acceptRequest(from) {
-        const users = getAllUsers();
+    async function acceptRequest(from) {
+        const users = await getAllUsers();
         let my = users[currentUser.username];
         let friend = users[from];
         if (!my || !friend) return;
@@ -617,50 +600,128 @@
         friend.sentRequests = (friend.sentRequests || []).filter(u => u !== currentUser.username);
         users[currentUser.username] = my;
         users[from] = friend;
-        saveAllUsers(users);
-        refreshUI();
+        await saveAllUsers(users);
+        await refreshUIfull();
         renderCalendar();
     }
 
-    function rejectRequest(from) {
-        const users = getAllUsers();
+    async function rejectRequest(from) {
+        const users = await getAllUsers();
         let my = users[currentUser.username];
         if (my) {
             my.incomingRequests = (my.incomingRequests || []).filter(u => u !== from);
             users[currentUser.username] = my;
-            saveAllUsers(users);
-            refreshUI();
+            await saveAllUsers(users);
+            await refreshUIfull();
         }
     }
 
-    function openRequestsModal() {
-        const users = getAllUsers();
+    // Получить актуальные данные друга (displayName, avatar)
+    async function getFriendDisplayData(friendUsername) {
+        const users = await getAllUsers();
+        const data = users[friendUsername];
+        if (!data) return { name: friendUsername, avatar: "👤" };
+        return { name: data.displayName || friendUsername, avatar: data.avatar || "👤" };
+    }
+
+    // События друзей (свежие)
+    async function getFriendEvents(friendUsername, dateKey) {
+        const users = await getAllUsers();
+        const friend = users[friendUsername];
+        if (!friend || !friend.events) return [];
+        const events = friend.events[dateKey] || [];
+        return events.map(text => ({ text, friendName: friendUsername }));
+    }
+
+    async function getCombinedEvents(dateKey) {
+        let mine = eventsDB[dateKey] || [];
+        let friendsEvents = [];
+        for (let friend of selectedFriends) {
+            const evts = await getFriendEvents(friend, dateKey);
+            friendsEvents.push(...evts);
+        }
+        return { mine, friends: friendsEvents };
+    }
+
+    // ---------- Рендер UI ----------
+    async function refreshUIfull() {
+        if (!currentUser) {
+            document.getElementById('profileName').innerText = "Не авторизован";
+            document.getElementById('avatarBtn').innerText = "😊";
+            document.getElementById('friendsListContainer').innerHTML = '<div style="padding:20px;text-align:center;">Авторизуйтесь, чтобы видеть друзей</div>';
+            document.getElementById('friendCountBadge').innerText = "0";
+            return;
+        }
+        document.getElementById('profileName').innerText = escapeHtml(currentUser.displayName || currentUser.username);
+        document.getElementById('avatarBtn').innerText = currentUser.avatar || "😊";
+
+        const users = await getAllUsers();
+        const myData = users[currentUser.username] || { friends: [], incomingRequests: [] };
+        const friends = myData.friends || [];
+        const incoming = myData.incomingRequests || [];
+        document.getElementById('friendCountBadge').innerText = friends.length;
+
+        let friendsHtml = '';
+        for (let friend of friends) {
+            const { name, avatar } = await getFriendDisplayData(friend);
+            const isSelected = selectedFriends.has(friend);
+            friendsHtml += `
+                <div class="friend-item ${isSelected ? 'selected' : ''}" data-friend="${escapeHtml(friend)}">
+                    <div class="friend-avatar">${escapeHtml(avatar)}</div>
+                    <div class="friend-name">${escapeHtml(name)}</div>
+                    <div style="font-size:0.7rem;">${isSelected ? '✓' : ''}</div>
+                </div>
+            `;
+        }
+        if (incoming.length > 0) {
+            friendsHtml += `<div style="margin-top:10px;"><button id="showRequestsBtn" class="btn-icon" style="background:#d97706;">📩 Заявки (${incoming.length})</button></div>`;
+        }
+        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
+
+        // Обработчики выбора друзей
+        document.querySelectorAll('.friend-item').forEach(el => {
+            const friendName = el.dataset.friend;
+            el.addEventListener('click', async () => {
+                if (selectedFriends.has(friendName)) selectedFriends.delete(friendName);
+                else selectedFriends.add(friendName);
+                await refreshUIfull(); // обновим выделение
+                renderCalendar();
+            });
+        });
+        if (incoming.length > 0) {
+            const btn = document.getElementById('showRequestsBtn');
+            if (btn) btn.onclick = () => openRequestsModal();
+        }
+    }
+
+    // ---------- Модалка заявок ----------
+    async function openRequestsModal() {
+        const users = await getAllUsers();
         const my = users[currentUser.username];
         const reqs = my.incomingRequests || [];
-        const modal = document.getElementById('requestsModal');
         const listDiv = document.getElementById('requestsList');
         if (reqs.length === 0) listDiv.innerHTML = '<div style="padding:20px;">Нет заявок</div>';
         else {
             listDiv.innerHTML = reqs.map(r => `
                 <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
-                    <span>👤 ${r}</span>
+                    <span>👤 ${escapeHtml(r)}</span>
                     <div>
-                        <button class="btn-icon acceptReqBtn" style="background:#2e7d64; padding:4px 10px;" data-user="${r}">✅ Принять</button>
-                        <button class="btn-icon rejectReqBtn" style="background:#b91c2c; padding:4px 10px;" data-user="${r}">❌</button>
+                        <button class="acceptReqBtn" style="background:#2e7d64; color:white; border:none; padding:4px 10px; border-radius:30px; cursor:pointer;" data-user="${escapeHtml(r)}">✅ Принять</button>
+                        <button class="rejectReqBtn" style="background:#b91c2c; color:white; border:none; padding:4px 10px; border-radius:30px; cursor:pointer;" data-user="${escapeHtml(r)}">❌</button>
                     </div>
                 </div>
             `).join('');
             document.querySelectorAll('.acceptReqBtn').forEach(btn => {
-                btn.onclick = () => { acceptRequest(btn.dataset.user); openRequestsModal(); };
+                btn.onclick = async () => { await acceptRequest(btn.dataset.user); openRequestsModal(); };
             });
             document.querySelectorAll('.rejectReqBtn').forEach(btn => {
-                btn.onclick = () => { rejectRequest(btn.dataset.user); openRequestsModal(); };
+                btn.onclick = async () => { await rejectRequest(btn.dataset.user); openRequestsModal(); };
             });
         }
-        modal.classList.add('active');
+        document.getElementById('requestsModal').classList.add('active');
     }
 
-    // ---------- ПРОФИЛЬ (изменить ник / аватар) ----------
+    // ---------- Профиль ----------
     function openProfileModal() {
         if (!currentUser) { alert("Войдите в аккаунт"); return; }
         document.getElementById('editAvatarPreview').innerText = currentUser.avatar || "😊";
@@ -669,84 +730,30 @@
         document.getElementById('profileModal').classList.add('active');
     }
 
-    function saveProfileChanges() {
+    async function saveProfileChanges() {
         let newAvatar = document.getElementById('avatarEmojiInput').value.trim();
         let newDisplayName = document.getElementById('newNicknameInput').value.trim();
         if (newAvatar === "") newAvatar = "😊";
         if (newDisplayName === "") newDisplayName = currentUser.username;
-        const users = getAllUsers();
+        const users = await getAllUsers();
         let userData = users[currentUser.username];
         if (userData) {
             userData.avatar = newAvatar;
             userData.displayName = newDisplayName;
             users[currentUser.username] = userData;
-            saveAllUsers(users);
+            await saveAllUsers(users);
             currentUser.avatar = newAvatar;
             currentUser.displayName = newDisplayName;
-            persistSession();
-            refreshUI();
-            renderCalendar(); // обновить аватарки друзей в списке
+            await refreshUIfull();
+            renderCalendar();
             document.getElementById('profileModal').classList.remove('active');
         }
     }
 
-    // ---------- АВТОРИЗАЦИЯ ----------
-    function loginUser(username, password) {
-        const users = getAllUsers();
-        const user = users[username];
-        if (!user) return { success: false, message: "Нет пользователя" };
-        if (user.password !== password) return { success: false, message: "Неверный пароль" };
-        currentUser = {
-            username,
-            avatar: user.avatar || "😊",
-            displayName: user.displayName || username
-        };
-        eventsDB = user.events || {};
-        selectedFriends.clear();
-        friendEventsCache = {};
-        persistSession();
-        refreshUI();
-        renderCalendar();
-        updateMonthYearDisplay();
-        return { success: true };
-    }
-
-    function registerUser(username, password) {
-        if (!username.trim() || !password.trim()) return { success: false, message: "Заполните поля" };
-        const users = getAllUsers();
-        if (users[username]) return { success: false, message: "Имя занято" };
-        users[username] = {
-            password: password,
-            events: {},
-            friends: [],
-            incomingRequests: [],
-            sentRequests: [],
-            avatar: "😊",
-            displayName: username
-        };
-        saveAllUsers(users);
-        return loginUser(username, password);
-    }
-
-    function logout() {
-        if (currentUser) saveCurrentUser();
-        currentUser = null;
-        eventsDB = {};
-        selectedFriends.clear();
-        friendEventsCache = {};
-        localStorage.removeItem("current_session_user");
-        refreshUI();
-        renderCalendar();
-        updateMonthYearDisplay();
-    }
-
-    // ---------- КАЛЕНДАРЬ ----------
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth();
-
+    // ---------- Календарь ----------
     function formatDateKey(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 
-    function renderCalendar() {
+    async function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         if (!grid) return;
         grid.innerHTML = '';
@@ -773,7 +780,7 @@
                 y=ny; m=nm; dayNum=nd;
             }
             const dateKey = formatDateKey(y,m,dayNum);
-            const { mine, friends } = getCombinedEvents(dateKey);
+            const { mine, friends } = await getCombinedEvents(dateKey);
             const cell = document.createElement('div');
             cell.className = `day-cell ${isCurrent ? 'current-month' : 'other-month'}`;
             const dayDiv = document.createElement('div');
@@ -789,13 +796,18 @@
             allEvents.slice(0, 4).forEach(ev => {
                 const badge = document.createElement('div');
                 badge.className = `event-badge ${ev.type === 'mine' ? 'event-mine' : 'event-friend'}`;
-                badge.textContent = ev.text.length>25 ? ev.text.slice(0,22)+'…' : ev.text;
+                badge.textContent = ev.text.length > 25 ? ev.text.slice(0,22)+'…' : ev.text;
                 eventsDiv.appendChild(badge);
             });
-            if (allEvents.length > 4) eventsDiv.appendChild(Object.assign(document.createElement('div'), { className:'more-indicator', textContent:`+${allEvents.length-4}` }));
+            if (allEvents.length > 4) {
+                const more = document.createElement('div');
+                more.className = 'more-indicator';
+                more.textContent = `+${allEvents.length-4}`;
+                eventsDiv.appendChild(more);
+            }
             cell.appendChild(eventsDiv);
             cell.addEventListener('click', () => {
-                if (!currentUser) { alert("Войдите для событий"); return; }
+                if (!currentUser) { alert("Войдите для управления событиями"); return; }
                 if (isCurrent) openEventModal(y,m,dayNum);
                 else { currentYear=y; currentMonth=m; renderCalendar(); updateMonthYearDisplay(); }
             });
@@ -808,118 +820,158 @@
         document.getElementById('monthYearDisplay').textContent = `${months[currentMonth]} ${currentYear}`;
     }
 
-    // ---------- МОДАЛКА СОБЫТИЙ ----------
+    // ---------- Модалка событий ----------
     let currentModalDateKey = null;
     const eventModal = document.getElementById('eventModal');
-    function openEventModal(y,m,d) {
+
+    async function openEventModal(y,m,d) {
         if (!currentUser) return;
         const dateKey = formatDateKey(y,m,d);
         currentModalDateKey = dateKey;
         document.getElementById('modalDateTitle').innerHTML = `${d} ${['Янв','Фев','Мар','Апр','Мая','Июня','Июля','Авг','Сен','Окт','Ноя','Дек'][m]} ${y}`;
-        refreshModalEvents();
+        await refreshModalEvents();
         eventModal.classList.add('active');
     }
 
-    function refreshModalEvents() {
+    async function refreshModalEvents() {
         if (!currentModalDateKey) return;
-        const { mine, friends } = getCombinedEvents(currentModalDateKey);
+        const { mine, friends } = await getCombinedEvents(currentModalDateKey);
         const container = document.getElementById('modalEventsList');
         container.innerHTML = '';
         if (mine.length) {
-            container.innerHTML += `<div style="font-weight:bold;">🔹 Мои:</div>`;
+            const mineTitle = document.createElement('div');
+            mineTitle.style.fontWeight = 'bold';
+            mineTitle.textContent = '🔹 Мои:';
+            container.appendChild(mineTitle);
             mine.forEach((ev, idx) => {
-                const div = document.createElement('div'); div.className = 'event-item';
-                div.innerHTML = `<span>${ev}</span><button class="delEventBtn" data-idx="${idx}">✕</button>`;
+                const div = document.createElement('div');
+                div.className = 'event-item';
+                div.innerHTML = `<span>${escapeHtml(ev)}</span><button class="delEventBtn" data-idx="${idx}" style="background:none; border:none; cursor:pointer; color:#b91c2c;">✕</button>`;
                 container.appendChild(div);
             });
         }
         if (friends.length) {
-            container.innerHTML += `<div style="font-weight:bold; margin-top:8px;">👥 События друзей:</div>`;
+            const friendTitle = document.createElement('div');
+            friendTitle.style.fontWeight = 'bold';
+            friendTitle.style.marginTop = '8px';
+            friendTitle.textContent = '👥 События друзей:';
+            container.appendChild(friendTitle);
             friends.forEach(f => {
-                const div = document.createElement('div'); div.className = 'event-item';
-                div.innerHTML = `<span style="color:#145c48;">[${f.friendName}] ${f.text}</span>`;
+                const div = document.createElement('div');
+                div.className = 'event-item';
+                div.innerHTML = `<span style="color:#145c48;">[${escapeHtml(f.friendName)}] ${escapeHtml(f.text)}</span>`;
                 container.appendChild(div);
             });
         }
-        if (mine.length===0 && friends.length===0) container.innerHTML = '<div>Нет событий</div>';
+        if (mine.length===0 && friends.length===0) {
+            container.innerHTML = '<div>Нет событий</div>';
+        }
         document.querySelectorAll('.delEventBtn').forEach(btn => {
-            btn.onclick = () => {
-                const idx = parseInt(btn.dataset.idx);
-                if (!isNaN(idx) && eventsDB[currentModalDateKey] && eventsDB[currentModalDateKey][idx]) {
-                    eventsDB[currentModalDateKey].splice(idx,1);
-                    if (eventsDB[currentModalDateKey].length===0) delete eventsDB[currentModalDateKey];
-                    saveCurrentUser();
-                    refreshModalEvents();
-                    renderCalendar();
+            btn.onclick = async () => {
+                if (confirm("Удалить это событие?")) {
+                    const idx = parseInt(btn.dataset.idx);
+                    if (!isNaN(idx) && eventsDB[currentModalDateKey] && eventsDB[currentModalDateKey][idx]) {
+                        eventsDB[currentModalDateKey].splice(idx, 1);
+                        if (eventsDB[currentModalDateKey].length === 0) delete eventsDB[currentModalDateKey];
+                        await saveCurrentUserData();
+                        await refreshModalEvents();
+                        renderCalendar();
+                    }
                 }
             };
         });
     }
 
-    function addEvent() {
+    async function addEvent() {
         if (!currentUser) return;
-        const txt = document.getElementById('newEventInput').value.trim();
+        let txt = document.getElementById('newEventInput').value.trim();
         if (!txt) return;
+        if (txt.length > 100) txt = txt.slice(0,100);
         if (!eventsDB[currentModalDateKey]) eventsDB[currentModalDateKey] = [];
         eventsDB[currentModalDateKey].push(txt);
-        saveCurrentUser();
+        await saveCurrentUserData();
         document.getElementById('newEventInput').value = '';
-        refreshModalEvents();
+        await refreshModalEvents();
         renderCalendar();
     }
 
-    function clearDayEvents() {
+    async function clearDayEvents() {
         if (!currentUser || !currentModalDateKey) return;
-        if (confirm("Удалить все свои события за этот день?")) {
+        if (confirm("Удалить ВСЕ свои события за этот день? Отменить нельзя.")) {
             delete eventsDB[currentModalDateKey];
-            saveCurrentUser();
-            refreshModalEvents();
+            await saveCurrentUserData();
+            await refreshModalEvents();
             renderCalendar();
         }
     }
 
-    // ---------- НАВИГАЦИЯ И ИНИЦИАЛИЗАЦИЯ ----------
+    // ---------- Инициализация и навигация ----------
     document.getElementById('prevMonthBtn').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('todayBtn').onclick = () => { currentYear=new Date().getFullYear(); currentMonth=new Date().getMonth(); renderCalendar(); updateMonthYearDisplay(); };
-    document.getElementById('sendFriendReqBtn').onclick = () => { const name=document.getElementById('newFriendInput').value.trim(); if(name) sendFriendRequest(name); document.getElementById('newFriendInput').value=''; };
+    document.getElementById('sendFriendReqBtn').onclick = async () => { const name=document.getElementById('newFriendInput').value.trim(); if(name) await sendFriendRequest(name); document.getElementById('newFriendInput').value=''; };
     document.getElementById('editProfileBtn').onclick = openProfileModal;
     document.getElementById('saveProfileBtn').onclick = saveProfileChanges;
-    document.getElementById('closeProfileModalBtn').onclick = () => document.getElementById('profileModal').classList.remove('active');
-    document.getElementById('closeRequestsModalBtn').onclick = () => document.getElementById('requestsModal').classList.remove('active');
     document.getElementById('addEventBtn').onclick = addEvent;
     document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
-    document.getElementById('closeEventModalBtn').onclick = () => eventModal.classList.remove('active');
-    // Модалка логина простая вызовем через кнопку на приветствии
-    function showAuthDialog() {
-        const uname = prompt("Вход / Регистрация\nВведите логин:");
-        if (!uname) return;
-        const pwd = prompt("Пароль:");
-        if (!pwd) return;
-        if (getAllUsers()[uname]) {
-            const res = loginUser(uname, pwd);
-            alert(res.message);
+    document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
+
+    // Модалки: закрытие по крестику и оверлею
+    document.querySelectorAll('.close-modal-x').forEach(el => {
+        el.onclick = () => {
+            const modalId = el.getAttribute('data-modal');
+            document.getElementById(modalId).classList.remove('active');
+        };
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.classList.remove('active');
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) overlay.classList.remove('active');
+        });
+    });
+
+    // Авторизационная модалка
+    document.getElementById('loginBtn').onclick = () => document.getElementById('authModal').classList.add('active');
+    document.getElementById('loginBtnModal').onclick = async () => {
+        const uname = document.getElementById('authUsername').value;
+        const pwd = document.getElementById('authPassword').value;
+        const res = await loginUser(uname, pwd);
+        alert(res.message);
+        if (res.success) document.getElementById('authModal').classList.remove('active');
+    };
+    document.getElementById('registerBtnModal').onclick = async () => {
+        const uname = document.getElementById('authUsername').value;
+        const pwd = document.getElementById('authPassword').value;
+        const res = await registerUser(uname, pwd);
+        alert(res.message);
+        if (res.success) document.getElementById('authModal').classList.remove('active');
+    };
+    document.getElementById('logoutBtn').onclick = async () => { await logout(); };
+
+    // Загрузка сессии при старте
+    (async function init() {
+        const sess = getSessionUser();
+        if (sess) {
+            const user = await loadCurrentUser();
+            if (user) {
+                currentUser = user;
+                eventsDB = user.events;
+                await refreshUIfull();
+                renderCalendar();
+                updateMonthYearDisplay();
+            } else {
+                await refreshUIfull();
+                renderCalendar();
+                updateMonthYearDisplay();
+            }
         } else {
-            const res = registerUser(uname, pwd);
-            alert(res.message);
+            await refreshUIfull();
+            renderCalendar();
+            updateMonthYearDisplay();
         }
-        refreshUI();
-        renderCalendar();
-    }
-    document.getElementById('profileName').addEventListener('click', () => { if(!currentUser) showAuthDialog(); });
-    document.getElementById('avatarBtn').addEventListener('click', () => { if(!currentUser) showAuthDialog(); });
-    if (!restoreSession()) { currentUser=null; }
-    refreshUI();
-    renderCalendar();
-    updateMonthYearDisplay();
-    // Кнопка выхода (добавим в профиль)
-    const logoutBtn = document.createElement('button');
-    logoutBtn.innerText = "🚪 Выйти";
-    logoutBtn.className = "edit-profile-btn";
-    logoutBtn.style.marginTop = "10px";
-    logoutBtn.style.background = "#b91c2c";
-    logoutBtn.onclick = () => { logout(); };
-    document.querySelector('.profile-card').appendChild(logoutBtn);
+    })();
 </script>
 </body>
 </html>
