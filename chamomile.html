@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>🔐 Социальный календарь | Безопасная версия</title>
+    <title>🔐 Социальный календарь | Вход при старте</title>
     <style>
         * {
             margin: 0;
@@ -466,7 +466,6 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
     }
 
-    // Сессия хранит только username
     function getSessionUser() {
         return localStorage.getItem("current_session_user");
     }
@@ -475,14 +474,13 @@
         else localStorage.removeItem("current_session_user");
     }
 
-    // Глобальное состояние приложения
-    let currentUser = null;          // { username, avatar, displayName }
-    let eventsDB = {};               // события текущего пользователя
-    let selectedFriends = new Set(); // выбранные никнеймы друзей
+    // Глобальное состояние
+    let currentUser = null;
+    let eventsDB = {};
+    let selectedFriends = new Set();
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
 
-    // ---------- Загрузка данных пользователя ----------
     async function loadCurrentUser() {
         const sess = getSessionUser();
         if (!sess) return null;
@@ -513,7 +511,6 @@
         }
     }
 
-    // Регистрация / вход
     async function registerUser(username, password) {
         username = username.trim();
         if (!username || !password) return { success: false, message: "Заполните все поля" };
@@ -565,7 +562,7 @@
         updateMonthYearDisplay();
     }
 
-    // ---------- Друзья и заявки ----------
+    // Друзья
     async function sendFriendRequest(to) {
         if (!currentUser) { alert("Войдите в аккаунт"); return false; }
         if (to === currentUser.username) { alert("Нельзя добавить себя"); return false; }
@@ -616,7 +613,6 @@
         }
     }
 
-    // Получить актуальные данные друга (displayName, avatar)
     async function getFriendDisplayData(friendUsername) {
         const users = await getAllUsers();
         const data = users[friendUsername];
@@ -624,7 +620,6 @@
         return { name: data.displayName || friendUsername, avatar: data.avatar || "👤" };
     }
 
-    // События друзей (свежие)
     async function getFriendEvents(friendUsername, dateKey) {
         const users = await getAllUsers();
         const friend = users[friendUsername];
@@ -643,7 +638,6 @@
         return { mine, friends: friendsEvents };
     }
 
-    // ---------- Рендер UI ----------
     async function refreshUIfull() {
         if (!currentUser) {
             document.getElementById('profileName').innerText = "Не авторизован";
@@ -678,13 +672,12 @@
         }
         document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
 
-        // Обработчики выбора друзей
         document.querySelectorAll('.friend-item').forEach(el => {
             const friendName = el.dataset.friend;
             el.addEventListener('click', async () => {
                 if (selectedFriends.has(friendName)) selectedFriends.delete(friendName);
                 else selectedFriends.add(friendName);
-                await refreshUIfull(); // обновим выделение
+                await refreshUIfull();
                 renderCalendar();
             });
         });
@@ -694,7 +687,6 @@
         }
     }
 
-    // ---------- Модалка заявок ----------
     async function openRequestsModal() {
         const users = await getAllUsers();
         const my = users[currentUser.username];
@@ -721,7 +713,6 @@
         document.getElementById('requestsModal').classList.add('active');
     }
 
-    // ---------- Профиль ----------
     function openProfileModal() {
         if (!currentUser) { alert("Войдите в аккаунт"); return; }
         document.getElementById('editAvatarPreview').innerText = currentUser.avatar || "😊";
@@ -750,7 +741,7 @@
         }
     }
 
-    // ---------- Календарь ----------
+    // Календарь
     function formatDateKey(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 
     async function renderCalendar() {
@@ -820,7 +811,6 @@
         document.getElementById('monthYearDisplay').textContent = `${months[currentMonth]} ${currentYear}`;
     }
 
-    // ---------- Модалка событий ----------
     let currentModalDateKey = null;
     const eventModal = document.getElementById('eventModal');
 
@@ -905,7 +895,7 @@
         }
     }
 
-    // ---------- Инициализация и навигация ----------
+    // Навигация
     document.getElementById('prevMonthBtn').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('todayBtn').onclick = () => { currentYear=new Date().getFullYear(); currentMonth=new Date().getMonth(); renderCalendar(); updateMonthYearDisplay(); };
@@ -916,7 +906,7 @@
     document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
     document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
 
-    // Модалки: закрытие по крестику и оверлею
+    // Закрытие модалок
     document.querySelectorAll('.close-modal-x').forEach(el => {
         el.onclick = () => {
             const modalId = el.getAttribute('data-modal');
@@ -932,7 +922,7 @@
         });
     });
 
-    // Авторизационная модалка
+    // Авторизация через кнопки
     document.getElementById('loginBtn').onclick = () => document.getElementById('authModal').classList.add('active');
     document.getElementById('loginBtnModal').onclick = async () => {
         const uname = document.getElementById('authUsername').value;
@@ -950,7 +940,7 @@
     };
     document.getElementById('logoutBtn').onclick = async () => { await logout(); };
 
-    // Загрузка сессии при старте
+    // ИНИЦИАЛИЗАЦИЯ: если нет пользователя – показываем модалку входа
     (async function init() {
         const sess = getSessionUser();
         if (sess) {
@@ -962,14 +952,19 @@
                 renderCalendar();
                 updateMonthYearDisplay();
             } else {
+                // сессия есть, но данные не загрузились – чистим сессию и показываем модалку
+                setSessionUser(null);
                 await refreshUIfull();
                 renderCalendar();
                 updateMonthYearDisplay();
+                document.getElementById('authModal').classList.add('active');
             }
         } else {
             await refreshUIfull();
             renderCalendar();
             updateMonthYearDisplay();
+            // ✅ Автоматически открываем окно входа/регистрации
+            document.getElementById('authModal').classList.add('active');
         }
     })();
 </script>
