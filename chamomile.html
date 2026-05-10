@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>👥 Социальный календарь | Друзья и профиль</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* главный контейнер с двумя колонками (календарь + панель друзей) */
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* левая панель друзей и профиля */
+        .sidebar {
+            width: 280px;
+            background: rgba(255,255,255,0.96);
+            border-radius: 2rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-card {
+            background: linear-gradient(135deg, #2f5b9e, #1f3b6e);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: #ffd966;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .avatar:hover {
+            transform: scale(1.02);
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 6px 0;
+            word-break: break-word;
+        }
+
+        .edit-profile-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .friends-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 18px 8px;
+            font-weight: 700;
+            color: #1e2f5e;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .friends-list {
+            flex: 1;
+            padding: 8px 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 60px;
+            margin-bottom: 6px;
+            background: #f8fafd;
+            transition: 0.1s;
+            cursor: pointer;
+        }
+
+        .friend-item.selected {
+            background: #e2edff;
+            border-left: 4px solid #2f5b9e;
+        }
+
+        .friend-avatar {
+            width: 40px;
+            height: 40px;
+            background: #cbd5e1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .friend-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .add-friend-form {
+            padding: 12px;
+            display: flex;
+            gap: 6px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .add-friend-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 40px;
+            border: 1px solid #cad2e3;
+            outline: none;
+        }
+
+        .btn-icon {
+            background: #2f5b9e;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        .btn-icon:hover {
+            background: #1f4273;
+        }
+
+        .pending-badge {
+            background: #fef3c7;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: #b45309;
+        }
+
+        /* основной блок календаря */
+        .calendar-wrapper {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255,255,255,0.96);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.35);
+            overflow: hidden;
+        }
+
+        .calendar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.8rem;
+            background: linear-gradient(120deg, #f8faff, #ffffff);
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .month-year {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e2a5e, #2b3b6e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: #f0f2f8;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #eef2fa;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: 700;
+            color: #2c3e66;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: white;
+        }
+
+        .day-cell {
+            min-height: 100px;
+            padding: 6px 4px;
+            border-right: 1px solid #e9edf4;
+            border-bottom: 1px solid #e9edf4;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .day-cell:hover {
+            background: #f6f9ff;
+        }
+
+        .day-number {
+            font-weight: 600;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+        }
+
+        .current-month .day-number {
+            background: #eef2ff;
+            color: #0b2b4f;
+        }
+
+        .other-month .day-number {
+            background: #f0f2f5;
+            color: #8b9ab0;
+        }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 70px;
+            overflow-y: auto;
+            font-size: 0.65rem;
+        }
+
+        .event-badge {
+            padding: 2px 5px;
+            border-radius: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-mine {
+            background: #e6edfc;
+            border-left: 2px solid #3b5e9c;
+        }
+
+        .event-friend {
+            background: #e0f7ea;
+            border-left: 2px solid #2e7d64;
+        }
+
+        /* модалки */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-container {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 32px;
+            padding: 1.5rem;
+            transform: scale(0.96);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .close-modal-x {
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            background: #fafcff;
+            padding: 8px 12px;
+            border-radius: 60px;
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+            .calendar-wrapper {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <!-- Боковая панель: профиль + друзья -->
+    <div class="sidebar" id="sidebar">
+        <div class="profile-card" id="profileCard">
+            <div class="avatar" id="avatarBtn">😊</div>
+            <div class="profile-name" id="profileName">Гость</div>
+            <button class="edit-profile-btn" id="editProfileBtn">✏️ Редактировать профиль</button>
+        </div>
+        <div class="friends-header">
+            <span>👥 Друзья</span>
+            <span id="friendCountBadge">0</span>
+        </div>
+        <div class="friends-list" id="friendsListContainer">
+            <div style="padding: 20px; text-align: center; color: #8ba0bc;">Войдите, чтобы видеть друзей</div>
+        </div>
+        <div class="add-friend-form" id="addFriendForm">
+            <input type="text" id="newFriendInput" placeholder="Никнейм друга">
+            <button class="btn-icon" id="sendFriendReqBtn">➕</button>
+        </div>
+    </div>
+
+    <!-- Календарь -->
+    <div class="calendar-wrapper">
+        <div class="calendar-nav">
+            <div class="month-year" id="monthYearDisplay">Май 2025</div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevMonthBtn">◀</button>
+                <button class="nav-btn today" id="todayBtn">Сегодня</button>
+                <button class="nav-btn" id="nextMonthBtn">▶</button>
+            </div>
+        </div>
+        <div class="weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+</div>
+
+<!-- Модалка событий -->
+<div id="eventModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span id="modalDateTitle"></span>
+            <span class="close-modal-x" id="closeEventModalBtn">&times;</span>
+        </div>
+        <div id="modalEventsList" style="max-height: 250px; overflow-y: auto; margin: 15px 0;"></div>
+        <div id="addEventSection" style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="newEventInput" placeholder="Новое событие" style="flex:1; padding: 8px; border-radius: 30px; border:1px solid #ccc;">
+            <button class="btn-icon" id="addEventBtn">Добавить</button>
+        </div>
+        <button class="btn-icon" id="clearDayEventsBtn" style="background:#b91c2c;">Очистить день</button>
+    </div>
+</div>
+
+<!-- Модалка профиля (смена ника и аватара) -->
+<div id="profileModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span>Редактировать профиль</span>
+            <span class="close-modal-x" id="closeProfileModalBtn">&times;</span>
+        </div>
+        <div style="text-align: center; margin-bottom: 16px;">
+            <div class="avatar" id="editAvatarPreview" style="width: 80px; height: 80px; font-size: 2.5rem; margin: auto; background: #e2e8f0;">😊</div>
+            <input type="text" id="avatarEmojiInput" placeholder="Введи эмодзи или текст (1-2 символа)" maxlength="2" style="margin: 10px 0; padding: 6px; width: 100%; border-radius: 30px;">
+        </div>
+        <input type="text" id="newNicknameInput" placeholder="Новый никнейм" style="width:100%; padding: 10px; border-radius: 30px; margin-bottom: 16px;">
+        <button class="btn-icon" id="saveProfileBtn" style="width:100%;">Сохранить изменения</button>
+    </div>
+</div>
+
+<!-- Модалка заявок -->
+<div id="requestsModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span>📨 Заявки в друзья</span>
+            <span class="close-modal-x" id="closeRequestsModalBtn">&times;</span>
+        </div>
+        <div id="requestsList" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+</div>
+
+<script>
+    // ---------- ХРАНИЛИЩЕ ПОЛЬЗОВАТЕЛЕЙ (с аватарами) ----------
+    const STORAGE_KEY = "social_calendar_v3";
+    let currentUser = null;            // { username, avatar, displayName }
+    let eventsDB = {};                 // события текущего юзера
+    let selectedFriends = new Set();    // выбранные друзья (никнеймы для просмотра)
+    let friendEventsCache = {};         // кеш событий друзей { friendName: { dateKey: [...] } }
+
+    // ---------- ФУНКЦИИ РАБОТЫ С ДАННЫМИ ----------
+    function getAllUsers() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        try {
+            return raw ? JSON.parse(raw) : {};
+        } catch { return {}; }
+    }
+
+    function saveAllUsers(users) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    }
+
+    function saveCurrentUser() {
+        if (!currentUser) return;
+        const users = getAllUsers();
+        let userData = users[currentUser.username];
+        if (userData) {
+            userData.avatar = currentUser.avatar;
+            userData.displayName = currentUser.displayName;
+            userData.events = eventsDB;
+            users[currentUser.username] = userData;
+            saveAllUsers(users);
+        }
+    }
+
+    function loadUserData(username) {
+        const users = getAllUsers();
+        return users[username] || null;
+    }
+
+    // инициализация / восстановление сессии
+    function restoreSession() {
+        const saved = localStorage.getItem("current_session_user");
+        if (saved) {
+            try {
+                const { username, avatar, displayName } = JSON.parse(saved);
+                const userExists = getAllUsers()[username];
+                if (userExists) {
+                    currentUser = { username, avatar: avatar || "😊", displayName: displayName || username };
+                    const full = getAllUsers()[username];
+                    eventsDB = full.events || {};
+                    currentUser.avatar = full.avatar || "😊";
+                    currentUser.displayName = full.displayName || username;
+                    return true;
+                }
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    function persistSession() {
+        if (currentUser) {
+            localStorage.setItem("current_session_user", JSON.stringify({
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                displayName: currentUser.displayName
+            }));
+        } else {
+            localStorage.removeItem("current_session_user");
+        }
+    }
+
+    // обновить интерфейс друзей и панели
+    function refreshUI() {
+        if (!currentUser) {
+            document.getElementById('profileName').innerText = "Гость";
+            document.getElementById('avatarBtn').innerText = "😊";
+            document.getElementById('friendsListContainer').innerHTML = '<div style="padding:20px;text-align:center;">Войдите, чтобы видеть друзей</div>';
+            document.getElementById('friendCountBadge').innerText = "";
+            return;
+        }
+        document.getElementById('profileName').innerText = currentUser.displayName || currentUser.username;
+        document.getElementById('avatarBtn').innerText = currentUser.avatar || "😊";
+        
+        const users = getAllUsers();
+        const myData = users[currentUser.username] || { friends: [], incomingRequests: [] };
+        const friends = myData.friends || [];
+        const incoming = myData.incomingRequests || [];
+        document.getElementById('friendCountBadge').innerText = friends.length;
+        
+        let friendsHtml = '';
+        friends.forEach(friend => {
+            const friendData = users[friend] || {};
+            const friendAvatar = friendData.avatar || "👤";
+            const friendName = friendData.displayName || friend;
+            const isSelected = selectedFriends.has(friend);
+            friendsHtml += `
+                <div class="friend-item ${isSelected ? 'selected' : ''}" data-friend="${friend}">
+                    <div class="friend-avatar">${friendAvatar}</div>
+                    <div class="friend-name">${friendName}</div>
+                    <div style="font-size:0.7rem; ${isSelected ? 'color:#2f5b9e;' : ''}">${isSelected ? '✓' : ''}</div>
+                </div>
+            `;
+        });
+        if (incoming.length > 0) {
+            friendsHtml += `<div style="margin-top:10px;"><button id="showRequestsBtn" class="btn-icon" style="background:#d97706;">📩 Заявки (${incoming.length})</button></div>`;
+        }
+        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
+        
+        document.querySelectorAll('.friend-item').forEach(el => {
+            const friendName = el.dataset.friend;
+            el.addEventListener('click', () => {
+                if (selectedFriends.has(friendName)) selectedFriends.delete(friendName);
+                else selectedFriends.add(friendName);
+                // подгружаем события друга в кеш, если нет
+                if (!friendEventsCache[friendName]) {
+                    const friendData = getAllUsers()[friendName];
+                    friendEventsCache[friendName] = friendData?.events || {};
+                }
+                refreshUI();
+                renderCalendar();
+            });
+        });
+        if (incoming.length > 0) {
+            const btn = document.getElementById('showRequestsBtn');
+            if (btn) btn.onclick = () => openRequestsModal();
+        }
+    }
+
+    // загрузка событий для выбранных друзей (кеш уже есть)
+    function getCombinedEvents(dateKey) {
+        let mine = eventsDB[dateKey] || [];
+        let friendsEvents = [];
+        for (let friend of selectedFriends) {
+            const friendEv = (friendEventsCache[friend] && friendEventsCache[friend][dateKey]) || [];
+            friendsEvents.push(...friendEv.map(e => ({ text: e, friendName: friend })));
+        }
+        return { mine, friends: friendsEvents };
+    }
+
+    // ---------- УПРАВЛЕНИЕ ДРУЗЬЯМИ ----------
+    function sendFriendRequest(to) {
+        if (!currentUser) { alert("Войдите"); return false; }
+        if (to === currentUser.username) { alert("Себя нельзя"); return false; }
+        const users = getAllUsers();
+        if (!users[to]) { alert("Пользователь не найден"); return false; }
+        let my = users[currentUser.username];
+        if (my.friends?.includes(to)) { alert("Уже друг"); return false; }
+        if (my.sentRequests?.includes(to)) { alert("Заявка уже отправлена"); return false; }
+        my.sentRequests = my.sentRequests || [];
+        my.sentRequests.push(to);
+        let target = users[to];
+        target.incomingRequests = target.incomingRequests || [];
+        target.incomingRequests.push(currentUser.username);
+        users[currentUser.username] = my;
+        users[to] = target;
+        saveAllUsers(users);
+        alert(`Заявка отправлена ${to}`);
+        refreshUI();
+        return true;
+    }
+
+    function acceptRequest(from) {
+        const users = getAllUsers();
+        let my = users[currentUser.username];
+        let friend = users[from];
+        if (!my || !friend) return;
+        my.incomingRequests = (my.incomingRequests || []).filter(u => u !== from);
+        my.friends = my.friends || [];
+        if (!my.friends.includes(from)) my.friends.push(from);
+        friend.friends = friend.friends || [];
+        if (!friend.friends.includes(currentUser.username)) friend.friends.push(currentUser.username);
+        friend.sentRequests = (friend.sentRequests || []).filter(u => u !== currentUser.username);
+        users[currentUser.username] = my;
+        users[from] = friend;
+        saveAllUsers(users);
+        refreshUI();
+        renderCalendar();
+    }
+
+    function rejectRequest(from) {
+        const users = getAllUsers();
+        let my = users[currentUser.username];
+        if (my) {
+            my.incomingRequests = (my.incomingRequests || []).filter(u => u !== from);
+            users[currentUser.username] = my;
+            saveAllUsers(users);
+            refreshUI();
+        }
+    }
+
+    function openRequestsModal() {
+        const users = getAllUsers();
+        const my = users[currentUser.username];
+        const reqs = my.incomingRequests || [];
+        const modal = document.getElementById('requestsModal');
+        const listDiv = document.getElementById('requestsList');
+        if (reqs.length === 0) listDiv.innerHTML = '<div style="padding:20px;">Нет заявок</div>';
+        else {
+            listDiv.innerHTML = reqs.map(r => `
+                <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                    <span>👤 ${r}</span>
+                    <div>
+                        <button class="btn-icon acceptReqBtn" style="background:#2e7d64; padding:4px 10px;" data-user="${r}">✅ Принять</button>
+                        <button class="btn-icon rejectReqBtn" style="background:#b91c2c; padding:4px 10px;" data-user="${r}">❌</button>
+                    </div>
+                </div>
+            `).join('');
+            document.querySelectorAll('.acceptReqBtn').forEach(btn => {
+                btn.onclick = () => { acceptRequest(btn.dataset.user); openRequestsModal(); };
+            });
+            document.querySelectorAll('.rejectReqBtn').forEach(btn => {
+                btn.onclick = () => { rejectRequest(btn.dataset.user); openRequestsModal(); };
+            });
+        }
+        modal.classList.add('active');
+    }
+
+    // ---------- ПРОФИЛЬ (изменить ник / аватар) ----------
+    function openProfileModal() {
+        if (!currentUser) { alert("Войдите в аккаунт"); return; }
+        document.getElementById('editAvatarPreview').innerText = currentUser.avatar || "😊";
+        document.getElementById('avatarEmojiInput').value = currentUser.avatar || "";
+        document.getElementById('newNicknameInput').value = currentUser.displayName || currentUser.username;
+        document.getElementById('profileModal').classList.add('active');
+    }
+
+    function saveProfileChanges() {
+        let newAvatar = document.getElementById('avatarEmojiInput').value.trim();
+        let newDisplayName = document.getElementById('newNicknameInput').value.trim();
+        if (newAvatar === "") newAvatar = "😊";
+        if (newDisplayName === "") newDisplayName = currentUser.username;
+        const users = getAllUsers();
+        let userData = users[currentUser.username];
+        if (userData) {
+            userData.avatar = newAvatar;
+            userData.displayName = newDisplayName;
+            users[currentUser.username] = userData;
+            saveAllUsers(users);
+            currentUser.avatar = newAvatar;
+            currentUser.displayName = newDisplayName;
+            persistSession();
+            refreshUI();
+            renderCalendar(); // обновить аватарки друзей в списке
+            document.getElementById('profileModal').classList.remove('active');
+        }
+    }
+
+    // ---------- АВТОРИЗАЦИЯ ----------
+    function loginUser(username, password) {
+        const users = getAllUsers();
+        const user = users[username];
+        if (!user) return { success: false, message: "Нет пользователя" };
+        if (user.password !== password) return { success: false, message: "Неверный пароль" };
+        currentUser = {
+            username,
+            avatar: user.avatar || "😊",
+            displayName: user.displayName || username
+        };
+        eventsDB = user.events || {};
+        selectedFriends.clear();
+        friendEventsCache = {};
+        persistSession();
+        refreshUI();
+        renderCalendar();
+        updateMonthYearDisplay();
+        return { success: true };
+    }
+
+    function registerUser(username, password) {
+        if (!username.trim() || !password.trim()) return { success: false, message: "Заполните поля" };
+        const users = getAllUsers();
+        if (users[username]) return { success: false, message: "Имя занято" };
+        users[username] = {
+            password: password,
+            events: {},
+            friends: [],
+            incomingRequests: [],
+            sentRequests: [],
+            avatar: "😊",
+            displayName: username
+        };
+        saveAllUsers(users);
+        return loginUser(username, password);
+    }
+
+    function logout() {
+        if (currentUser) saveCurrentUser();
+        currentUser = null;
+        eventsDB = {};
+        selectedFriends.clear();
+        friendEventsCache = {};
+        localStorage.removeItem("current_session_user");
+        refreshUI();
+        renderCalendar();
+        updateMonthYearDisplay();
+    }
+
+    // ---------- КАЛЕНДАРЬ ----------
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    function formatDateKey(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        let offset = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
+        const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+        const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+        const total = 42;
+        for (let i=0; i<total; i++) {
+            let y=currentYear, m=currentMonth, dayNum;
+            let isCurrent = false;
+            if (i<offset) {
+                let pd = prevDays - offset + i + 1;
+                let py=currentYear, pm=currentMonth-1;
+                if (pm<0) { pm=11; py--; }
+                y=py; m=pm; dayNum=pd;
+            } else if (i<offset+daysInMonth) {
+                dayNum = i-offset+1;
+                isCurrent=true;
+            } else {
+                let nd = i - (offset+daysInMonth)+1;
+                let ny=currentYear, nm=currentMonth+1;
+                if (nm>11) { nm=0; ny++; }
+                y=ny; m=nm; dayNum=nd;
+            }
+            const dateKey = formatDateKey(y,m,dayNum);
+            const { mine, friends } = getCombinedEvents(dateKey);
+            const cell = document.createElement('div');
+            cell.className = `day-cell ${isCurrent ? 'current-month' : 'other-month'}`;
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day-number';
+            dayDiv.textContent = dayNum;
+            cell.appendChild(dayDiv);
+            const eventsDiv = document.createElement('div');
+            eventsDiv.className = 'events-list';
+            const allEvents = [
+                ...mine.map(t => ({ text: t, type: 'mine' })),
+                ...friends.map(f => ({ text: f.text, type: 'friend', friend: f.friendName }))
+            ];
+            allEvents.slice(0, 4).forEach(ev => {
+                const badge = document.createElement('div');
+                badge.className = `event-badge ${ev.type === 'mine' ? 'event-mine' : 'event-friend'}`;
+                badge.textContent = ev.text.length>25 ? ev.text.slice(0,22)+'…' : ev.text;
+                eventsDiv.appendChild(badge);
+            });
+            if (allEvents.length > 4) eventsDiv.appendChild(Object.assign(document.createElement('div'), { className:'more-indicator', textContent:`+${allEvents.length-4}` }));
+            cell.appendChild(eventsDiv);
+            cell.addEventListener('click', () => {
+                if (!currentUser) { alert("Войдите для событий"); return; }
+                if (isCurrent) openEventModal(y,m,dayNum);
+                else { currentYear=y; currentMonth=m; renderCalendar(); updateMonthYearDisplay(); }
+            });
+            grid.appendChild(cell);
+        }
+    }
+
+    function updateMonthYearDisplay() {
+        const months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+        document.getElementById('monthYearDisplay').textContent = `${months[currentMonth]} ${currentYear}`;
+    }
+
+    // ---------- МОДАЛКА СОБЫТИЙ ----------
+    let currentModalDateKey = null;
+    const eventModal = document.getElementById('eventModal');
+    function openEventModal(y,m,d) {
+        if (!currentUser) return;
+        const dateKey = formatDateKey(y,m,d);
+        currentModalDateKey = dateKey;
+        document.getElementById('modalDateTitle').innerHTML = `${d} ${['Янв','Фев','Мар','Апр','Мая','Июня','Июля','Авг','Сен','Окт','Ноя','Дек'][m]} ${y}`;
+        refreshModalEvents();
+        eventModal.classList.add('active');
+    }
+
+    function refreshModalEvents() {
+        if (!currentModalDateKey) return;
+        const { mine, friends } = getCombinedEvents(currentModalDateKey);
+        const container = document.getElementById('modalEventsList');
+        container.innerHTML = '';
+        if (mine.length) {
+            container.innerHTML += `<div style="font-weight:bold;">🔹 Мои:</div>`;
+            mine.forEach((ev, idx) => {
+                const div = document.createElement('div'); div.className = 'event-item';
+                div.innerHTML = `<span>${ev}</span><button class="delEventBtn" data-idx="${idx}">✕</button>`;
+                container.appendChild(div);
+            });
+        }
+        if (friends.length) {
+            container.innerHTML += `<div style="font-weight:bold; margin-top:8px;">👥 События друзей:</div>`;
+            friends.forEach(f => {
+                const div = document.createElement('div'); div.className = 'event-item';
+                div.innerHTML = `<span style="color:#145c48;">[${f.friendName}] ${f.text}</span>`;
+                container.appendChild(div);
+            });
+        }
+        if (mine.length===0 && friends.length===0) container.innerHTML = '<div>Нет событий</div>';
+        document.querySelectorAll('.delEventBtn').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.dataset.idx);
+                if (!isNaN(idx) && eventsDB[currentModalDateKey] && eventsDB[currentModalDateKey][idx]) {
+                    eventsDB[currentModalDateKey].splice(idx,1);
+                    if (eventsDB[currentModalDateKey].length===0) delete eventsDB[currentModalDateKey];
+                    saveCurrentUser();
+                    refreshModalEvents();
+                    renderCalendar();
+                }
+            };
+        });
+    }
+
+    function addEvent() {
+        if (!currentUser) return;
+        const txt = document.getElementById('newEventInput').value.trim();
+        if (!txt) return;
+        if (!eventsDB[currentModalDateKey]) eventsDB[currentModalDateKey] = [];
+        eventsDB[currentModalDateKey].push(txt);
+        saveCurrentUser();
+        document.getElementById('newEventInput').value = '';
+        refreshModalEvents();
+        renderCalendar();
+    }
+
+    function clearDayEvents() {
+        if (!currentUser || !currentModalDateKey) return;
+        if (confirm("Удалить все свои события за этот день?")) {
+            delete eventsDB[currentModalDateKey];
+            saveCurrentUser();
+            refreshModalEvents();
+            renderCalendar();
+        }
+    }
+
+    // ---------- НАВИГАЦИЯ И ИНИЦИАЛИЗАЦИЯ ----------
+    document.getElementById('prevMonthBtn').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateMonthYearDisplay(); };
+    document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
+    document.getElementById('todayBtn').onclick = () => { currentYear=new Date().getFullYear(); currentMonth=new Date().getMonth(); renderCalendar(); updateMonthYearDisplay(); };
+    document.getElementById('sendFriendReqBtn').onclick = () => { const name=document.getElementById('newFriendInput').value.trim(); if(name) sendFriendRequest(name); document.getElementById('newFriendInput').value=''; };
+    document.getElementById('editProfileBtn').onclick = openProfileModal;
+    document.getElementById('saveProfileBtn').onclick = saveProfileChanges;
+    document.getElementById('closeProfileModalBtn').onclick = () => document.getElementById('profileModal').classList.remove('active');
+    document.getElementById('closeRequestsModalBtn').onclick = () => document.getElementById('requestsModal').classList.remove('active');
+    document.getElementById('addEventBtn').onclick = addEvent;
+    document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
+    document.getElementById('closeEventModalBtn').onclick = () => eventModal.classList.remove('active');
+    // Модалка логина простая вызовем через кнопку на приветствии
+    function showAuthDialog() {
+        const uname = prompt("Вход / Регистрация\nВведите логин:");
+        if (!uname) return;
+        const pwd = prompt("Пароль:");
+        if (!pwd) return;
+        if (getAllUsers()[uname]) {
+            const res = loginUser(uname, pwd);
+            alert(res.message);
+        } else {
+            const res = registerUser(uname, pwd);
+            alert(res.message);
+        }
+        refreshUI();
+        renderCalendar();
+    }
+    document.getElementById('profileName').addEventListener('click', () => { if(!currentUser) showAuthDialog(); });
+    document.getElementById('avatarBtn').addEventListener('click', () => { if(!currentUser) showAuthDialog(); });
+    if (!restoreSession()) { currentUser=null; }
+    refreshUI();
+    renderCalendar();
+    updateMonthYearDisplay();
+    // Кнопка выхода (добавим в профиль)
+    const logoutBtn = document.createElement('button');
+    logoutBtn.innerText = "🚪 Выйти";
+    logoutBtn.className = "edit-profile-btn";
+    logoutBtn.style.marginTop = "10px";
+    logoutBtn.style.background = "#b91c2c";
+    logoutBtn.onclick = () => { logout(); };
+    document.querySelector('.profile-card').appendChild(logoutBtn);
+</script>
+</body>
+</html>
