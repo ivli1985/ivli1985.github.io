@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>🔐 Социальный календарь | Вход при старте</title>
+    <title>🔐 Социальный календарь | Экспорт/Импорт профиля</title>
     <style>
         * {
             margin: 0;
@@ -327,6 +327,16 @@
             background: #3b7c5e;
         }
 
+        .export-import-buttons {
+            display: flex;
+            gap: 6px;
+            margin: 8px 12px;
+        }
+        .export-import-buttons button {
+            flex: 1;
+            font-size: 0.7rem;
+        }
+
         @media (max-width: 800px) {
             .dashboard { flex-direction: column; }
             .sidebar { width: 100%; order: 2; }
@@ -356,6 +366,11 @@
             <button class="btn-icon" id="sendFriendReqBtn">➕</button>
         </div>
         <button id="refreshFriendsBtn" class="btn-icon refresh-friends-btn">🔄 Обновить данные друзей</button>
+        <div class="export-import-buttons">
+            <button id="exportProfileBtn" class="btn-icon" style="background:#2e7d64;">📤 Экспорт профиля</button>
+            <button id="importProfileBtn" class="btn-icon" style="background:#b45309;">📥 Импорт профиля</button>
+        </div>
+        <button id="shareInviteBtn" class="btn-icon" style="margin:0 12px 12px 12px; background:#6b21a5;">🔗 Скопировать приглашение</button>
     </div>
 
     <div class="calendar-wrapper">
@@ -895,6 +910,91 @@
         }
     }
 
+    // ---------- ЭКСПОРТ / ИМПОРТ ПРОФИЛЯ (кросс-браузерная синхронизация) ----------
+    async function exportProfile() {
+        if (!currentUser) { alert("Войдите в аккаунт"); return; }
+        const users = await getAllUsers();
+        const myData = users[currentUser.username];
+        if (!myData) return;
+        const exportData = {
+            username: currentUser.username,
+            avatar: currentUser.avatar,
+            displayName: currentUser.displayName,
+            events: eventsDB,
+            friends: myData.friends || [],
+            incomingRequests: myData.incomingRequests || [],
+            sentRequests: myData.sentRequests || []
+        };
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `profile_${currentUser.username}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("Профиль экспортирован. Передайте файл другу для импорта.");
+    }
+
+    async function importProfile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!imported.username || !imported.events) throw new Error("Неверный формат");
+                    // Проверяем, не занято ли имя
+                    const users = await getAllUsers();
+                    if (users[imported.username] && imported.username !== currentUser?.username) {
+                        if (!confirm(`Пользователь "${imported.username}" уже существует. Заменить его данные?`)) {
+                            reject("Импорт отменён");
+                            return;
+                        }
+                    }
+                    // Импортируем
+                    users[imported.username] = {
+                        password: users[imported.username]?.password || await hashPassword("temp123"), // сохраняем старый пароль или ставим временный
+                        events: imported.events,
+                        friends: imported.friends || [],
+                        incomingRequests: imported.incomingRequests || [],
+                        sentRequests: imported.sentRequests || [],
+                        avatar: imported.avatar || "😊",
+                        displayName: imported.displayName || imported.username
+                    };
+                    await saveAllUsers(users);
+                    // Если импортируем текущего пользователя – перезагружаем сессию
+                    if (currentUser && imported.username === currentUser.username) {
+                        currentUser.avatar = imported.avatar;
+                        currentUser.displayName = imported.displayName;
+                        eventsDB = imported.events;
+                        await saveCurrentUserData();
+                        await refreshUIfull();
+                        renderCalendar();
+                        alert("Ваш профиль обновлён из файла.");
+                    } else {
+                        alert(`Пользователь ${imported.username} импортирован. Теперь вы можете войти под ним (пароль не изменился, либо временный "temp123" – смените в профиле).`);
+                    }
+                    resolve();
+                } catch(err) { reject(err); }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    function shareInvite() {
+        if (!currentUser) { alert("Войдите в аккаунт"); return; }
+        const inviteData = {
+            action: "friend_request",
+            from: currentUser.username,
+            displayName: currentUser.displayName,
+            avatar: currentUser.avatar
+        };
+        const inviteStr = JSON.stringify(inviteData);
+        navigator.clipboard.writeText(inviteStr).then(() => {
+            alert("Приглашение скопировано в буфер! Отправьте его другу. Он должен импортировать его через кнопку 'Импорт профиля' (сохраните текст в файл .json и импортируйте).");
+        }).catch(() => alert("Не удалось скопировать"));
+    }
+
     // Навигация
     document.getElementById('prevMonthBtn').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
@@ -905,6 +1005,21 @@
     document.getElementById('addEventBtn').onclick = addEvent;
     document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
     document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
+    document.getElementById('exportProfileBtn').onclick = exportProfile;
+    document.getElementById('shareInviteBtn').onclick = shareInvite;
+    document.getElementById('importProfileBtn').onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = async (e) => {
+            if (e.target.files.length) {
+                try {
+                    await importProfile(e.target.files[0]);
+                } catch(err) { alert("Ошибка импорта: " + err); }
+            }
+        };
+        input.click();
+    };
 
     // Закрытие модалок
     document.querySelectorAll('.close-modal-x').forEach(el => {
@@ -922,7 +1037,7 @@
         });
     });
 
-    // Авторизация через кнопки
+    // Авторизация
     document.getElementById('loginBtn').onclick = () => document.getElementById('authModal').classList.add('active');
     document.getElementById('loginBtnModal').onclick = async () => {
         const uname = document.getElementById('authUsername').value;
@@ -940,7 +1055,7 @@
     };
     document.getElementById('logoutBtn').onclick = async () => { await logout(); };
 
-    // ИНИЦИАЛИЗАЦИЯ: если нет пользователя – показываем модалку входа
+    // Инициализация
     (async function init() {
         const sess = getSessionUser();
         if (sess) {
@@ -952,7 +1067,6 @@
                 renderCalendar();
                 updateMonthYearDisplay();
             } else {
-                // сессия есть, но данные не загрузились – чистим сессию и показываем модалку
                 setSessionUser(null);
                 await refreshUIfull();
                 renderCalendar();
@@ -963,7 +1077,6 @@
             await refreshUIfull();
             renderCalendar();
             updateMonthYearDisplay();
-            // ✅ Автоматически открываем окно входа/регистрации
             document.getElementById('authModal').classList.add('active');
         }
     })();
