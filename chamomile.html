@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title> Социальный календарь | Вход при старте</title>
+    <title>🔐 Социальный календарь | Профиль справа</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,8 @@
             flex-wrap: wrap;
         }
 
-        .sidebar {
+        /* Левая панель – только друзья */
+        .friends-sidebar {
             width: 280px;
             background: rgba(255,255,255,0.96);
             border-radius: 2rem;
@@ -35,54 +36,6 @@
             display: flex;
             flex-direction: column;
         }
-
-        .profile-card {
-            background: linear-gradient(135deg, #2f5b9e, #1f3b6e);
-            padding: 20px;
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-
-        .avatar {
-            width: 80px;
-            height: 80px;
-            background: #ffd966;
-            border-radius: 50%;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 3px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .avatar:hover { transform: scale(1.02); }
-
-        .profile-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 6px 0;
-            word-break: break-word;
-        }
-
-        .edit-profile-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.1s;
-        }
-        .edit-profile-btn:hover { background: rgba(255,255,255,0.3); }
 
         .friends-header {
             display: flex;
@@ -161,6 +114,7 @@
         }
         .btn-icon:hover { background: #1f4273; }
 
+        /* Календарь - центр */
         .calendar-wrapper {
             flex: 1;
             min-width: 300px;
@@ -269,6 +223,61 @@
         .event-mine { background: #e6edfc; border-left: 2px solid #3b5e9c; }
         .event-friend { background: #e0f7ea; border-left: 2px solid #2e7d64; }
 
+        /* Правая панель – профиль */
+        .right-profile {
+            width: 280px;
+            background: rgba(255,255,255,0.96);
+            border-radius: 2rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: #ffd966;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .profile-avatar:hover { transform: scale(1.02); }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 6px 0;
+            word-break: break-word;
+            color: #1e2f5e;
+        }
+
+        .settings-btn {
+            background: rgba(47, 91, 158, 0.1);
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 40px;
+            transition: 0.1s;
+            margin-top: 10px;
+        }
+        .settings-btn:hover {
+            background: rgba(47, 91, 158, 0.2);
+            transform: rotate(15deg);
+        }
+
+        /* Модалки */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -327,23 +336,27 @@
             background: #3b7c5e;
         }
 
-        @media (max-width: 800px) {
-            .dashboard { flex-direction: column; }
-            .sidebar { width: 100%; order: 2; }
-            .calendar-wrapper { order: 1; }
+        @media (max-width: 1000px) {
+            .dashboard {
+                flex-direction: column;
+            }
+            .friends-sidebar, .right-profile {
+                width: 100%;
+                order: 2;
+            }
+            .calendar-wrapper {
+                order: 1;
+            }
+            .right-profile {
+                order: 3;
+            }
         }
     </style>
 </head>
 <body>
 <div class="dashboard">
-    <div class="sidebar">
-        <div class="profile-card">
-            <div class="avatar" id="avatarBtn">😊</div>
-            <div class="profile-name" id="profileName">Не авторизован</div>
-            <button class="edit-profile-btn" id="editProfileBtn">✏️ Редактировать профиль</button>
-            <button class="edit-profile-btn" id="loginBtn" style="margin-top:8px;">🔑 Войти / Регистрация</button>
-            <button class="edit-profile-btn" id="logoutBtn" style="background:#b91c2c; margin-top:8px;">🚪 Выйти</button>
-        </div>
+    <!-- Левая панель: друзья -->
+    <div class="friends-sidebar">
         <div class="friends-header">
             <span>👥 Друзья</span>
             <span id="friendCountBadge">0</span>
@@ -355,9 +368,10 @@
             <input type="text" id="newFriendInput" placeholder="Никнейм друга">
             <button class="btn-icon" id="sendFriendReqBtn">➕</button>
         </div>
-        <button id="refreshFriendsBtn" class="btn-icon refresh-friends-btn">🔄 Обновить данные друзей</button>
+        <button id="refreshFriendsBtn" class="btn-icon refresh-friends-btn">🔄 Обновить друзей</button>
     </div>
 
+    <!-- Календарь -->
     <div class="calendar-wrapper">
         <div class="calendar-nav">
             <div class="month-year" id="monthYearDisplay">Май 2025</div>
@@ -369,6 +383,13 @@
         </div>
         <div class="weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
         <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+
+    <!-- Правая панель: профиль с шестерёнкой -->
+    <div class="right-profile" id="rightProfile">
+        <div class="profile-avatar" id="avatarBtn">😊</div>
+        <div class="profile-name" id="profileName">Не авторизован</div>
+        <button class="settings-btn" id="settingsGearBtn" title="Настройки профиля">⚙️</button>
     </div>
 </div>
 
@@ -388,19 +409,20 @@
     </div>
 </div>
 
-<!-- Модалка профиля -->
+<!-- Модалка профиля (настройки: аватар, ник, выход) -->
 <div id="profileModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
-            <span>Редактировать профиль</span>
+            <span>⚙️ Настройки профиля</span>
             <span class="close-modal-x" data-modal="profileModal">&times;</span>
         </div>
         <div style="text-align: center; margin-bottom: 16px;">
-            <div class="avatar" id="editAvatarPreview" style="width:80px; height:80px; font-size:2.5rem; margin:auto; background:#e2e8f0;">😊</div>
+            <div class="avatar" id="editAvatarPreview" style="width:80px; height:80px; font-size:2.5rem; margin:auto; background:#e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center;">😊</div>
             <input type="text" id="avatarEmojiInput" placeholder="Введи эмодзи (1-2 символа)" maxlength="2" style="margin:10px 0; padding:6px; width:100%; border-radius:30px;">
         </div>
         <input type="text" id="newNicknameInput" placeholder="Новый никнейм" maxlength="30" style="width:100%; padding:10px; border-radius:30px; margin-bottom:16px;">
-        <button class="btn-icon" id="saveProfileBtn" style="width:100%;">Сохранить изменения</button>
+        <button class="btn-icon" id="saveProfileBtn" style="width:100%; margin-bottom:8px;">💾 Сохранить изменения</button>
+        <button class="btn-icon" id="logoutFromModalBtn" style="width:100%; background:#b91c2c;">🚪 Выйти из аккаунта</button>
     </div>
 </div>
 
@@ -560,6 +582,8 @@
         await refreshUIfull();
         renderCalendar();
         updateMonthYearDisplay();
+        // закрыть модалку профиля, если открыта
+        document.getElementById('profileModal').classList.remove('active');
     }
 
     // Друзья
@@ -900,11 +924,20 @@
     document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('todayBtn').onclick = () => { currentYear=new Date().getFullYear(); currentMonth=new Date().getMonth(); renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('sendFriendReqBtn').onclick = async () => { const name=document.getElementById('newFriendInput').value.trim(); if(name) await sendFriendRequest(name); document.getElementById('newFriendInput').value=''; };
-    document.getElementById('editProfileBtn').onclick = openProfileModal;
+    document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
+
+    // Кнопка шестерёнки открывает настройки профиля
+    document.getElementById('settingsGearBtn').onclick = openProfileModal;
+    // Кнопка аватара тоже может открывать настройки (удобно)
+    document.getElementById('avatarBtn').onclick = openProfileModal;
+    // Кнопка сохранения в модалке профиля
     document.getElementById('saveProfileBtn').onclick = saveProfileChanges;
+    // Кнопка выхода в модалке профиля
+    document.getElementById('logoutFromModalBtn').onclick = async () => { await logout(); document.getElementById('profileModal').classList.remove('active'); };
+
+    // Модалка событий
     document.getElementById('addEventBtn').onclick = addEvent;
     document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
-    document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
 
     // Закрытие модалок
     document.querySelectorAll('.close-modal-x').forEach(el => {
@@ -922,8 +955,7 @@
         });
     });
 
-    // Авторизация через кнопки
-    document.getElementById('loginBtn').onclick = () => document.getElementById('authModal').classList.add('active');
+    // Авторизация
     document.getElementById('loginBtnModal').onclick = async () => {
         const uname = document.getElementById('authUsername').value;
         const pwd = document.getElementById('authPassword').value;
@@ -938,9 +970,8 @@
         alert(res.message);
         if (res.success) document.getElementById('authModal').classList.remove('active');
     };
-    document.getElementById('logoutBtn').onclick = async () => { await logout(); };
 
-    // ИНИЦИАЛИЗАЦИЯ: если нет пользователя – показываем модалку входа
+    // Старт приложения: если нет сессии – показываем модалку входа
     (async function init() {
         const sess = getSessionUser();
         if (sess) {
@@ -952,7 +983,6 @@
                 renderCalendar();
                 updateMonthYearDisplay();
             } else {
-                // сессия есть, но данные не загрузились – чистим сессию и показываем модалку
                 setSessionUser(null);
                 await refreshUIfull();
                 renderCalendar();
@@ -963,7 +993,6 @@
             await refreshUIfull();
             renderCalendar();
             updateMonthYearDisplay();
-            // ✅ Автоматически открываем окно входа/регистрации
             document.getElementById('authModal').classList.add('active');
         }
     })();
