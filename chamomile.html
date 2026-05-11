@@ -694,7 +694,7 @@
         if (incoming.length > 0) {
             friendsHtml += `<div style="margin-top:10px;"><button id="showRequestsBtn" class="btn-icon" style="background:#d97706;">📩 Заявки (${incoming.length})</button></div>`;
         }
-        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
+        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму ниже</div>';
 
         document.querySelectorAll('.friend-item').forEach(el => {
             const friendName = el.dataset.friend;
