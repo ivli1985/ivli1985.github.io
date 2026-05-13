@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title> Социальный календарь | Профиль справа</title>
+    <title>🔐 Социальный календарь | Быстрое копирование событий</title>
     <style>
         * {
             margin: 0;
@@ -336,6 +336,40 @@
             background: #3b7c5e;
         }
 
+        /* Стили для выбора дат */
+        .dates-picker {
+            background: #f9f9ff;
+            border-radius: 24px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .mini-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin: 10px 0;
+        }
+        .mini-day {
+            text-align: center;
+            padding: 6px 0;
+            background: #eef2fa;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .mini-day.selected {
+            background: #2f5b9e;
+            color: white;
+        }
+        .date-badge {
+            display: inline-block;
+            background: #e0e7ff;
+            padding: 4px 8px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 0.7rem;
+        }
+
         @media (max-width: 1000px) {
             .dashboard {
                 flex-direction: column;
@@ -405,11 +439,45 @@
             <input type="text" id="newEventInput" placeholder="Новое событие" maxlength="100" style="flex:1; padding: 8px; border-radius: 30px; border:1px solid #ccc;">
             <button class="btn-icon" id="addEventBtn">Добавить</button>
         </div>
+        <!-- Кнопка быстрого копирования в несколько дней -->
+        <div style="margin-bottom: 10px;">
+            <button class="btn-icon" id="copyToMultipleBtn" style="background:#3b7c5e; width:100%;">📋 Добавить в несколько дней</button>
+        </div>
         <button class="btn-icon" id="clearDayEventsBtn" style="background:#b91c2c;">Очистить день</button>
     </div>
 </div>
 
-<!-- Модалка профиля (настройки: аватар, ник, выход) -->
+<!-- Модалка выбора дат для копирования события -->
+<div id="copyDatesModal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 550px;">
+        <div class="modal-header">
+            <span>📅 Выберите даты для копирования события</span>
+            <span class="close-modal-x" data-modal="copyDatesModal">&times;</span>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Событие:</strong> <span id="eventToCopyPreview"></span>
+        </div>
+        <div class="dates-picker">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <button id="prevMonthCopyBtn" class="nav-btn" style="padding: 4px 10px;">◀</button>
+                <span id="copyMonthYearDisplay" style="font-weight: bold;"></span>
+                <button id="nextMonthCopyBtn" class="nav-btn" style="padding: 4px 10px;">▶</button>
+            </div>
+            <div class="weekdays" style="padding: 5px 0;">
+                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+            </div>
+            <div id="copyCalendarGrid" class="mini-calendar-grid"></div>
+            <div style="margin-top: 12px;">
+                <div>Выбранные даты:</div>
+                <div id="selectedDatesList" style="min-height: 40px; margin: 8px 0;"></div>
+                <button id="confirmCopyEventsBtn" class="btn-icon" style="width:100%; background:#2e7d64;">➕ Добавить событие в выбранные дни</button>
+                <button id="clearSelectedDatesBtn" class="btn-icon" style="width:100%; margin-top:8px; background:#6c757d;">Очистить выбор</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка профиля (настройки) -->
 <div id="profileModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -582,7 +650,6 @@
         await refreshUIfull();
         renderCalendar();
         updateMonthYearDisplay();
-        // закрыть модалку профиля, если открыта
         document.getElementById('profileModal').classList.remove('active');
     }
 
@@ -694,7 +761,7 @@
         if (incoming.length > 0) {
             friendsHtml += `<div style="margin-top:10px;"><button id="showRequestsBtn" class="btn-icon" style="background:#d97706;">📩 Заявки (${incoming.length})</button></div>`;
         }
-        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму ниже</div>';
+        document.getElementById('friendsListContainer').innerHTML = friendsHtml || '<div style="padding:12px;">Нет друзей, добавьте через форму выше</div>';
 
         document.querySelectorAll('.friend-item').forEach(el => {
             const friendName = el.dataset.friend;
@@ -919,6 +986,112 @@
         }
     }
 
+    // ---------- БЫСТРОЕ КОПИРОВАНИЕ В НЕСКОЛЬКО ДНЕЙ ----------
+    let copyModalCurrentYear = new Date().getFullYear();
+    let copyModalCurrentMonth = new Date().getMonth();
+    let selectedDatesSet = new Set(); // храним строки "YYYY-MM-DD"
+    let currentEventText = "";
+
+    function renderCopyCalendar() {
+        const grid = document.getElementById('copyCalendarGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        const firstDay = new Date(copyModalCurrentYear, copyModalCurrentMonth, 1);
+        let offset = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
+        const daysInMonth = new Date(copyModalCurrentYear, copyModalCurrentMonth+1, 0).getDate();
+        const prevDays = new Date(copyModalCurrentYear, copyModalCurrentMonth, 0).getDate();
+        const total = 42;
+        for (let i = 0; i < total; i++) {
+            let y = copyModalCurrentYear, m = copyModalCurrentMonth, dayNum;
+            let isCurrentMonth = true;
+            if (i < offset) {
+                let pd = prevDays - offset + i + 1;
+                let py = copyModalCurrentYear, pm = copyModalCurrentMonth - 1;
+                if (pm < 0) { pm = 11; py--; }
+                y = py; m = pm; dayNum = pd;
+                isCurrentMonth = false;
+            } else if (i < offset + daysInMonth) {
+                dayNum = i - offset + 1;
+                isCurrentMonth = true;
+            } else {
+                let nd = i - (offset + daysInMonth) + 1;
+                let ny = copyModalCurrentYear, nm = copyModalCurrentMonth + 1;
+                if (nm > 11) { nm = 0; ny++; }
+                y = ny; m = nm; dayNum = nd;
+                isCurrentMonth = false;
+            }
+            const dateKey = formatDateKey(y, m, dayNum);
+            const isSelected = selectedDatesSet.has(dateKey);
+            const cell = document.createElement('div');
+            cell.className = `mini-day ${isSelected ? 'selected' : ''}`;
+            cell.textContent = dayNum;
+            if (!isCurrentMonth) cell.style.opacity = '0.5';
+            cell.addEventListener('click', () => {
+                if (selectedDatesSet.has(dateKey)) selectedDatesSet.delete(dateKey);
+                else selectedDatesSet.add(dateKey);
+                renderCopyCalendar();
+                updateSelectedDatesList();
+            });
+            grid.appendChild(cell);
+        }
+        const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        document.getElementById('copyMonthYearDisplay').textContent = `${months[copyModalCurrentMonth]} ${copyModalCurrentYear}`;
+    }
+
+    function updateSelectedDatesList() {
+        const container = document.getElementById('selectedDatesList');
+        if (!container) return;
+        if (selectedDatesSet.size === 0) {
+            container.innerHTML = '<span style="color:gray;">Ничего не выбрано</span>';
+            return;
+        }
+        const sorted = Array.from(selectedDatesSet).sort();
+        container.innerHTML = sorted.map(d => `<span class="date-badge">${d}</span>`).join('');
+    }
+
+    async function openCopyModal() {
+        if (!currentUser) return;
+        const eventInput = document.getElementById('newEventInput');
+        currentEventText = eventInput.value.trim();
+        if (!currentEventText) {
+            alert("Сначала напишите событие в поле выше");
+            return;
+        }
+        document.getElementById('eventToCopyPreview').innerText = currentEventText;
+        // Сброс выбора
+        selectedDatesSet.clear();
+        copyModalCurrentYear = currentYear;
+        copyModalCurrentMonth = currentMonth;
+        renderCopyCalendar();
+        updateSelectedDatesList();
+        document.getElementById('copyDatesModal').classList.add('active');
+    }
+
+    async function confirmCopyEvents() {
+        if (selectedDatesSet.size === 0) {
+            alert("Выберите хотя бы один день");
+            return;
+        }
+        let addedCount = 0;
+        for (let dateKey of selectedDatesSet) {
+            if (!eventsDB[dateKey]) eventsDB[dateKey] = [];
+            // Не добавляем дубликат, если уже есть такое же событие в этот день (опционально)
+            // Но для простоты добавим, даже если есть (пользователь сам разберётся)
+            eventsDB[dateKey].push(currentEventText);
+            addedCount++;
+        }
+        await saveCurrentUserData();
+        alert(`Событие "${currentEventText}" добавлено в ${addedCount} день(дней)`);
+        document.getElementById('copyDatesModal').classList.remove('active');
+        // Обновляем календарь и текущую модалку, если она открыта
+        renderCalendar();
+        if (eventModal.classList.contains('active')) {
+            await refreshModalEvents();
+        }
+        // Очистим поле ввода события, чтобы не копировать повторно то же самое
+        document.getElementById('newEventInput').value = '';
+    }
+
     // Навигация
     document.getElementById('prevMonthBtn').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(); updateMonthYearDisplay(); };
     document.getElementById('nextMonthBtn').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); updateMonthYearDisplay(); };
@@ -926,18 +1099,20 @@
     document.getElementById('sendFriendReqBtn').onclick = async () => { const name=document.getElementById('newFriendInput').value.trim(); if(name) await sendFriendRequest(name); document.getElementById('newFriendInput').value=''; };
     document.getElementById('refreshFriendsBtn').onclick = async () => { await refreshUIfull(); renderCalendar(); alert("Данные друзей обновлены"); };
 
-    // Кнопка шестерёнки открывает настройки профиля
     document.getElementById('settingsGearBtn').onclick = openProfileModal;
-    // Кнопка аватара тоже может открывать настройки (удобно)
     document.getElementById('avatarBtn').onclick = openProfileModal;
-    // Кнопка сохранения в модалке профиля
     document.getElementById('saveProfileBtn').onclick = saveProfileChanges;
-    // Кнопка выхода в модалке профиля
     document.getElementById('logoutFromModalBtn').onclick = async () => { await logout(); document.getElementById('profileModal').classList.remove('active'); };
 
-    // Модалка событий
     document.getElementById('addEventBtn').onclick = addEvent;
     document.getElementById('clearDayEventsBtn').onclick = clearDayEvents;
+    document.getElementById('copyToMultipleBtn').onclick = openCopyModal;
+
+    // Кнопки в модалке копирования
+    document.getElementById('prevMonthCopyBtn').onclick = () => { copyModalCurrentMonth--; if(copyModalCurrentMonth<0){copyModalCurrentMonth=11;copyModalCurrentYear--;} renderCopyCalendar(); };
+    document.getElementById('nextMonthCopyBtn').onclick = () => { copyModalCurrentMonth++; if(copyModalCurrentMonth>11){copyModalCurrentMonth=0;copyModalCurrentYear++;} renderCopyCalendar(); };
+    document.getElementById('confirmCopyEventsBtn').onclick = confirmCopyEvents;
+    document.getElementById('clearSelectedDatesBtn').onclick = () => { selectedDatesSet.clear(); renderCopyCalendar(); updateSelectedDatesList(); };
 
     // Закрытие модалок
     document.querySelectorAll('.close-modal-x').forEach(el => {
@@ -971,7 +1146,7 @@
         if (res.success) document.getElementById('authModal').classList.remove('active');
     };
 
-    // Старт приложения: если нет сессии – показываем модалку входа
+    // Старт
     (async function init() {
         const sess = getSessionUser();
         if (sess) {
