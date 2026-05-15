@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>🔐 Социальный календарь | Быстрое копирование событий</title>
+    <title> Календарь | Быстрое копирование событий</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             flex-wrap: wrap;
         }
 
-        /* Левая панель – только друзья */
+        /* Левая панель – друзья */
         .friends-sidebar {
             width: 280px;
             background: rgba(255,255,255,0.96);
@@ -336,7 +336,7 @@
             background: #3b7c5e;
         }
 
-        /* Стили для выбора дат */
+        /* Выбор дат */
         .dates-picker {
             background: #f9f9ff;
             border-radius: 24px;
@@ -389,10 +389,10 @@
 </head>
 <body>
 <div class="dashboard">
-    <!-- Левая панель: друзья -->
+    < друзья -->
     <div class="friends-sidebar">
         <div class="friends-header">
-            <span>👥 Друзья</span>
+            <span> Друзья</span>
             <span id="friendCountBadge">0</span>
         </div>
         <div class="friends-list" id="friendsListContainer">
@@ -419,7 +419,7 @@
         <div id="calendarGrid" class="calendar-grid"></div>
     </div>
 
-    <!-- Правая панель: профиль с шестерёнкой -->
+    <!-- Правая панель: профиль -->
     <div class="right-profile" id="rightProfile">
         <div class="profile-avatar" id="avatarBtn">😊</div>
         <div class="profile-name" id="profileName">Не авторизован</div>
@@ -451,7 +451,7 @@
 <div id="copyDatesModal" class="modal-overlay">
     <div class="modal-container" style="max-width: 550px;">
         <div class="modal-header">
-            <span>📅 Выберите даты для копирования события</span>
+            <span> Выберите даты для копирования события</span>
             <span class="close-modal-x" data-modal="copyDatesModal">&times;</span>
         </div>
         <div style="margin-bottom: 15px;">
@@ -481,7 +481,7 @@
 <div id="profileModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
-            <span>⚙️ Настройки профиля</span>
+            <span> Настройки профиля</span>
             <span class="close-modal-x" data-modal="profileModal">&times;</span>
         </div>
         <div style="text-align: center; margin-bottom: 16px;">
@@ -498,7 +498,7 @@
 <div id="requestsModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
-            <span>📨 Заявки в друзья</span>
+            <span>Заявки в друзья</span>
             <span class="close-modal-x" data-modal="requestsModal">&times;</span>
         </div>
         <div id="requestsList" style="max-height: 300px; overflow-y: auto;"></div>
@@ -509,7 +509,7 @@
 <div id="authModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
-            <span>🔐 Вход / Регистрация</span>
+            <span> Вход / Регистрация</span>
             <span class="close-modal-x" data-modal="authModal">&times;</span>
         </div>
         <input type="text" id="authUsername" placeholder="Логин" style="width:100%; padding:10px; border-radius:30px; margin-bottom:12px;">
@@ -520,7 +520,7 @@
 </div>
 
 <script>
-    // ---------- Безопасное экранирование ----------
+    //  Безопасное экранирование 
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -533,7 +533,7 @@
         });
     }
 
-    // ---------- Хеширование пароля (SHA-256) ----------
+    //  Хеширование пароля (SHA-256) 
     async function hashPassword(password) {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
@@ -542,7 +542,7 @@
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // ---------- Хранилище ----------
+    //  Хранилище 
     const STORAGE_KEY = "social_calendar_secure_v2";
 
     async function getAllUsers() {
@@ -935,7 +935,7 @@
             const friendTitle = document.createElement('div');
             friendTitle.style.fontWeight = 'bold';
             friendTitle.style.marginTop = '8px';
-            friendTitle.textContent = '👥 События друзей:';
+            friendTitle.textContent = ' События друзей:';
             container.appendChild(friendTitle);
             friends.forEach(f => {
                 const div = document.createElement('div');
@@ -986,7 +986,7 @@
         }
     }
 
-    // ---------- БЫСТРОЕ КОПИРОВАНИЕ В НЕСКОЛЬКО ДНЕЙ ----------
+    // Быстрая вставка в неск дней
     let copyModalCurrentYear = new Date().getFullYear();
     let copyModalCurrentMonth = new Date().getMonth();
     let selectedDatesSet = new Set(); // храним строки "YYYY-MM-DD"
@@ -1075,20 +1075,16 @@
         let addedCount = 0;
         for (let dateKey of selectedDatesSet) {
             if (!eventsDB[dateKey]) eventsDB[dateKey] = [];
-            // Не добавляем дубликат, если уже есть такое же событие в этот день (опционально)
-            // Но для простоты добавим, даже если есть (пользователь сам разберётся)
             eventsDB[dateKey].push(currentEventText);
             addedCount++;
         }
         await saveCurrentUserData();
         alert(`Событие "${currentEventText}" добавлено в ${addedCount} день(дней)`);
         document.getElementById('copyDatesModal').classList.remove('active');
-        // Обновляем календарь и текущую модалку, если она открыта
         renderCalendar();
         if (eventModal.classList.contains('active')) {
             await refreshModalEvents();
         }
-        // Очистим поле ввода события, чтобы не копировать повторно то же самое
         document.getElementById('newEventInput').value = '';
     }
 
